@@ -54,6 +54,8 @@ func dialector(args *Config) gorm.Dialector {
 		return useSqlite(args)
 	case "mysql":
 		return useMysql(args)
+	case "pgsql", "postgres", "postgresql":
+		return usePgsql(args)
 	default:
 		logman.Fatal("database type error", "type", args.Type)
 	}
