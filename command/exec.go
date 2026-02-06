@@ -17,7 +17,6 @@ type ExecPayload struct {
 }
 
 func Exec(data *ExecPayload) (string, error) {
-
 	var (
 		err error
 		tmp string
@@ -61,5 +60,4 @@ func Exec(data *ExecPayload) (string, error) {
 	}
 
 	return execScript(bin, arg, data)
-
 }

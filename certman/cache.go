@@ -22,7 +22,6 @@ type DirCache = autocert.DirCache
 var ErrCacheMiss = autocert.ErrCacheMiss
 
 func (m *Manager) pemLoad(ctx context.Context, ck certKey) (*tls.Certificate, error) {
-
 	if m.Cache == nil {
 		return nil, ErrCacheMiss
 	}
@@ -67,11 +66,9 @@ func (m *Manager) pemLoad(ctx context.Context, ck certKey) (*tls.Certificate, er
 	}
 
 	return tlscert, nil
-
 }
 
 func (m *Manager) pemSave(ctx context.Context, ck certKey, tlscert *tls.Certificate) error {
-
 	if m.Cache == nil {
 		return nil
 	}
@@ -101,5 +98,4 @@ func (m *Manager) pemSave(ctx context.Context, ck certKey, tlscert *tls.Certific
 	}
 
 	return m.Cache.Put(ctx, ck.String()+".pem", buf.Bytes())
-
 }

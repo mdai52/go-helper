@@ -10,21 +10,16 @@ import (
 )
 
 func Static(root, prefix string) {
-
 	hfs := gin.Dir(root, false)
 	engine.Use(StaticServe(hfs, prefix))
-
 }
 
 func StaticIndex(root, prefix string) {
-
 	hfs := gin.Dir(root, true)
 	engine.Use(StaticServe(hfs, prefix))
-
 }
 
 func StaticEmbed(efs embed.FS, prefix, subdir string) {
-
 	var hfs http.FileSystem
 
 	if subdir == "" {
@@ -35,11 +30,9 @@ func StaticEmbed(efs embed.FS, prefix, subdir string) {
 	}
 
 	engine.Use(StaticServe(hfs, prefix))
-
 }
 
 func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
-
 	fileServer := http.FileServer(hfs)
 	if prefix != "" {
 		fileServer = http.StripPrefix(prefix, fileServer)
@@ -62,5 +55,4 @@ func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
 			}
 		}
 	}
-
 }

@@ -10,7 +10,6 @@ import (
 )
 
 func NewSSHKeypair() (string, string, error) {
-
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return "", "", err
@@ -27,11 +26,9 @@ func NewSSHKeypair() (string, string, error) {
 	}
 
 	return string(privateKeyBytes), string(publicKeyBytes), nil
-
 }
 
 func NewSSHPublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
-
 	publicKey, err := ssh.NewPublicKey(privatekey)
 	if err != nil {
 		return nil, err
@@ -40,5 +37,4 @@ func NewSSHPublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
 	publicKeyBytes := ssh.MarshalAuthorizedKey(publicKey)
 
 	return publicKeyBytes, nil
-
 }

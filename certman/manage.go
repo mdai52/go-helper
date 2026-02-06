@@ -45,7 +45,6 @@ type Manager struct {
 }
 
 func (m *Manager) GetCertificate(name string) (*tls.Certificate, error) {
-
 	if name == "" {
 		return nil, errors.New("missing domain name")
 	}
@@ -79,11 +78,9 @@ func (m *Manager) GetCertificate(name string) (*tls.Certificate, error) {
 
 	m.pemSave(ctx, ck, cert)
 	return cert, nil
-
 }
 
 func (m *Manager) loadCert(ctx context.Context, ck certKey) (*tls.Certificate, error) {
-
 	m.stateMu.Lock()
 
 	if s, ok := m.state[ck]; ok {
@@ -115,11 +112,9 @@ func (m *Manager) loadCert(ctx context.Context, ck certKey) (*tls.Certificate, e
 	m.state[ck] = s
 
 	return cert, nil
-
 }
 
 func (m *Manager) createCert(ctx context.Context, ck certKey) (*tls.Certificate, error) {
-
 	state, err := m.certState(ck)
 	if err != nil {
 		return nil, err
@@ -155,11 +150,9 @@ func (m *Manager) createCert(ctx context.Context, ck certKey) (*tls.Certificate,
 	state.leaf = leaf
 
 	return state.tlscert()
-
 }
 
 func (m *Manager) certState(ck certKey) (*certState, error) {
-
 	m.stateMu.Lock()
 	defer m.stateMu.Unlock()
 
@@ -185,11 +178,9 @@ func (m *Manager) certState(ck certKey) (*certState, error) {
 	m.state[ck] = state
 
 	return state, nil
-
 }
 
 func (m *Manager) authorizedCert(ctx context.Context, key crypto.Signer, ck certKey) (der [][]byte, leaf *x509.Certificate, err error) {
-
 	req := &x509.CertificateRequest{
 		Subject:  pkix.Name{CommonName: ck.domain},
 		DNSNames: []string{ck.domain},
@@ -224,11 +215,9 @@ func (m *Manager) authorizedCert(ctx context.Context, key crypto.Signer, ck cert
 	}
 
 	return chain, leaf, nil
-
 }
 
 func (m *Manager) authorizedOrder(ctx context.Context, ck certKey) (*acme.Order, error) {
-
 	order, err := m.client.AuthorizeOrder(ctx, acme.DomainIDs(ck.domain))
 	if err != nil {
 		return nil, err
@@ -282,11 +271,9 @@ func (m *Manager) authorizedOrder(ctx context.Context, ck certKey) (*acme.Order,
 	}
 
 	return m.client.WaitOrder(ctx, order.URI)
-
 }
 
 func (m *Manager) revokePendingAuthz(uri []string) {
-
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
@@ -296,11 +283,9 @@ func (m *Manager) revokePendingAuthz(uri []string) {
 			m.client.RevokeAuthorization(ctx, u)
 		}
 	}
-
 }
 
 func (m *Manager) fulfill(ctx context.Context, chal *acme.Challenge, domain string) (func(), error) {
-
 	value, err := m.client.DNS01ChallengeRecord(chal.Token)
 	if err != nil {
 		return nil, err
@@ -320,11 +305,9 @@ func (m *Manager) fulfill(ctx context.Context, chal *acme.Challenge, domain stri
 	return func() {
 		go m.DnsProvider.DeleteRecords(ctx, domain, record)
 	}, nil
-
 }
 
 func (m *Manager) accountKey(ctx context.Context) (crypto.Signer, error) {
-
 	const keyName = "account.key"
 
 	genKey := func() (*ecdsa.PrivateKey, error) {
@@ -360,11 +343,9 @@ func (m *Manager) accountKey(ctx context.Context) (crypto.Signer, error) {
 	}
 
 	return parsePrivateKey(priv.Bytes)
-
 }
 
 func (m *Manager) acmeClient(ctx context.Context) (*acme.Client, error) {
-
 	m.clientMu.Lock()
 	defer m.clientMu.Unlock()
 
@@ -396,5 +377,4 @@ func (m *Manager) acmeClient(ctx context.Context) (*acme.Client, error) {
 	}
 
 	return m.client, err
-
 }

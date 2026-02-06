@@ -13,7 +13,6 @@ type TcpRelayParam struct {
 }
 
 func TcpRelay(ws *websocket.Conn, rq *TcpRelayParam) error {
-
 	// 接受客户端连接
 
 	defer ws.Close()
@@ -41,12 +40,9 @@ func TcpRelay(ws *websocket.Conn, rq *TcpRelayParam) error {
 	go ioCopy(ws, conn, ch)
 
 	return <-ch
-
 }
 
 func ioCopy(dst io.Writer, src io.Reader, ch chan<- error) {
-
 	_, err := io.Copy(dst, src)
 	ch <- err
-
 }

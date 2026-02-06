@@ -30,7 +30,6 @@ type certState struct {
 }
 
 func (s *certState) tlscert() (*tls.Certificate, error) {
-
 	if s.key == nil {
 		return nil, errors.New("missing signer")
 	}
@@ -43,11 +42,9 @@ func (s *certState) tlscert() (*tls.Certificate, error) {
 		Certificate: s.cert,
 		Leaf:        s.leaf,
 	}, nil
-
 }
 
 func encodeECDSAKey(w io.Writer, key *ecdsa.PrivateKey) error {
-
 	b, err := x509.MarshalECPrivateKey(key)
 	if err != nil {
 		return err
@@ -55,11 +52,9 @@ func encodeECDSAKey(w io.Writer, key *ecdsa.PrivateKey) error {
 
 	pb := &pem.Block{Type: "EC PRIVATE KEY", Bytes: b}
 	return pem.Encode(w, pb)
-
 }
 
 func parsePrivateKey(der []byte) (crypto.Signer, error) {
-
 	if key, err := x509.ParsePKCS1PrivateKey(der); err == nil {
 		return key, nil
 	}
@@ -80,11 +75,9 @@ func parsePrivateKey(der []byte) (crypto.Signer, error) {
 	}
 
 	return nil, errors.New("failed to parse private key")
-
 }
 
 func validCertificate(ck certKey, der [][]byte, key crypto.Signer, now time.Time) (*x509.Certificate, error) {
-
 	var n int
 	for _, b := range der {
 		n += len(b)
@@ -135,5 +128,4 @@ func validCertificate(ck certKey, der [][]byte, key crypto.Signer, now time.Time
 	}
 
 	return leaf, nil
-
 }

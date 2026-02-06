@@ -13,7 +13,6 @@ import (
 )
 
 func Request(rq *ReqeustParam) (any, error) {
-
 	if ep, err := solveEndpoint(rq); ep != "" {
 		rq.Endpoint = ep
 	} else {
@@ -27,11 +26,9 @@ func Request(rq *ReqeustParam) (any, error) {
 	}
 
 	return resp["body"], nil
-
 }
 
 func newClient(rq *ReqeustParam) (map[string]any, error) {
-
 	config := &ac.Config{
 		AccessKeyId:     &rq.SecretId,
 		AccessKeySecret: &rq.SecretKey,
@@ -64,11 +61,9 @@ func newClient(rq *ReqeustParam) (map[string]any, error) {
 	} else {
 		return nil, err
 	}
-
 }
 
 func getSDKError(e error) error {
-
 	se := at.SDKError{}
 
 	if mapstructure.Decode(e, &se) != nil {
@@ -83,5 +78,4 @@ func getSDKError(e error) error {
 	msg := exp.ReplaceAllString(*se.Message, "$1")
 
 	return errors.New(msg)
-
 }

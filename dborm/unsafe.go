@@ -7,7 +7,6 @@ import (
 )
 
 func OrderSafe(data string) error {
-
 	var expr = regexp.MustCompile(`^(\w+)( DESC)?$`)
 
 	for _, v := range strings.Split(data, ",") {
@@ -17,5 +16,4 @@ func OrderSafe(data string) error {
 	}
 
 	return nil
-
 }

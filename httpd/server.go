@@ -12,7 +12,6 @@ import (
 var server *http.Server
 
 func Server(addr string, options ...any) {
-
 	if engine == nil {
 		if len(options) > 0 {
 			Engine(options[0].(bool))
@@ -45,5 +44,4 @@ func Server(addr string, options ...any) {
 	if err := server.ListenAndServe(); err != nil {
 		logman.Warn(err.Error())
 	}
-
 }

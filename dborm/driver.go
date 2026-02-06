@@ -12,7 +12,6 @@ import (
 )
 
 func useSqlite(args *Config) gorm.Dialector {
-
 	dbname := args.DbName
 	if args.Host != "" && !filepath.IsAbs(args.DbName) {
 		dbname = path.Join(args.Host, dbname)
@@ -25,11 +24,9 @@ func useSqlite(args *Config) gorm.Dialector {
 	}
 
 	return sqlite.Open(dbname + option)
-
 }
 
 func useMysql(args *Config) gorm.Dialector {
-
 	host := args.Host
 	user := args.User
 	password := args.Password
@@ -45,7 +42,6 @@ func useMysql(args *Config) gorm.Dialector {
 }
 
 func usePgsql(args *Config) gorm.Dialector {
-
 	host := args.Host
 	user := args.User
 	password := args.Password
@@ -58,5 +54,4 @@ func usePgsql(args *Config) gorm.Dialector {
 
 	dsn := "postgres://" + user + ":" + password + "@" + host + "/" + dbname + option
 	return postgres.Open(dsn)
-
 }

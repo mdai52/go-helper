@@ -9,7 +9,6 @@ import (
 // 加密字符串
 
 func Des3Encrypt(s, p string) (string, error) {
-
 	sb := []byte(s)
 
 	pb := openssl.Md5ToString(p)
@@ -19,13 +18,11 @@ func Des3Encrypt(s, p string) (string, error) {
 		return hex.EncodeToString(secret), err
 	}
 	return "", err
-
 }
 
 // 解密字符串
 
 func Des3Decrypt(s, p string) (string, error) {
-
 	sb, err := hex.DecodeString(s)
 	if err != nil {
 		return "", err
@@ -38,5 +35,4 @@ func Des3Decrypt(s, p string) (string, error) {
 		return string(secret), err
 	}
 	return "", err
-
 }

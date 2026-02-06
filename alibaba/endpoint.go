@@ -10,7 +10,6 @@ import (
 var endpointData = map[string]string{}
 
 func solveEndpoint(rq *ReqeustParam) (string, error) {
-
 	if rq.RegionId == "" {
 		return rq.Service + ".aliyuncs.com", nil
 	}
@@ -38,11 +37,9 @@ func solveEndpoint(rq *ReqeustParam) (string, error) {
 	}
 
 	return "", errors.New("solve endpoint failed")
-
 }
 
 func requestEndpoint(rq *ReqeustParam) (*EndpointItem, error) {
-
 	item := &EndpointItem{}
 
 	// 从接口请求数据
@@ -80,5 +77,4 @@ func requestEndpoint(rq *ReqeustParam) (*EndpointItem, error) {
 	}
 
 	return item, err
-
 }

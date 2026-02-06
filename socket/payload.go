@@ -13,12 +13,10 @@ type PlainData struct {
 }
 
 func (d *PlainData) GetPayload(v any) error {
-
 	payload, err := json.Marshal(d.Payload)
 	if err != nil {
 		return err
 	}
 
 	return json.Unmarshal(payload, v)
-
 }

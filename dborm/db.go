@@ -19,7 +19,6 @@ type Config struct {
 }
 
 func Connect(args *Config) *gorm.DB {
-
 	config := &gorm.Config{
 		Logger: NewLogger(),
 		NamingStrategy: schema.NamingStrategy{
@@ -34,21 +33,17 @@ func Connect(args *Config) *gorm.DB {
 	}
 
 	return Db
-
 }
 
 func Destroy() error {
-
 	if db, err := Db.DB(); db != nil {
 		return db.Close()
 	} else {
 		return err
 	}
-
 }
 
 func dialector(args *Config) gorm.Dialector {
-
 	switch args.Type {
 	case "sqlite":
 		return useSqlite(args)
@@ -61,5 +56,4 @@ func dialector(args *Config) gorm.Dialector {
 	}
 
 	return nil
-
 }

@@ -8,7 +8,5 @@ import (
 )
 
 func getFileOwner(fileInfo os.FileInfo) (string, string, error) {
-
 	return "", "", fmt.Errorf("Not implemented")
-
 }

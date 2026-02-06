@@ -19,7 +19,6 @@ type Config struct {
 }
 
 func SetDefault(args *Config) {
-
 	config.Level = args.Level
 	config.Target = args.Target
 	config.Storage = args.Storage
@@ -29,11 +28,9 @@ func SetDefault(args *Config) {
 	if config.Storage != "" && config.Storage != "." {
 		os.MkdirAll(config.Storage, 0755)
 	}
-
 }
 
 func NewLogger(name string) *slog.Logger {
-
 	var level slog.Level
 	var handler slog.Handler
 
@@ -47,11 +44,9 @@ func NewLogger(name string) *slog.Logger {
 	handler = slog.NewTextHandler(writer, option)
 
 	return slog.New(handler)
-
 }
 
 func AutoWriter(name string) io.Writer {
-
 	switch config.Target {
 	case "file":
 		return FileWriter(name)
@@ -64,11 +59,9 @@ func AutoWriter(name string) io.Writer {
 	default:
 		return os.Stdout
 	}
-
 }
 
 func FileWriter(name string) *lumberjack.Logger {
-
 	f := path.Join(config.Storage, name) + ".log"
 
 	return &lumberjack.Logger{
@@ -78,5 +71,4 @@ func FileWriter(name string) *lumberjack.Logger {
 		MaxBackups: 21,   // 保留旧文件的最大个数
 		MaxAge:     7,    // 保留旧文件的最大天数
 	}
-
 }

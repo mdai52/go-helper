@@ -12,7 +12,6 @@ import (
 )
 
 func Summary(withAddr bool) *SummaryStat {
-
 	hi, _ := host.Info()
 	cl, _ := cpu.Counts(true)
 	cc, _ := cpu.Counts(false)
@@ -41,11 +40,9 @@ func Summary(withAddr bool) *SummaryStat {
 	}
 
 	return stat
-
 }
 
 func Detail(withAddr bool) *DetailStat {
-
 	ci, _ := cpu.Info()
 	ni, _ := net.IOCounters(true)
 	dp, _ := disk.Partitions(false)
@@ -117,5 +114,4 @@ func Detail(withAddr bool) *DetailStat {
 		sw.Total,
 		sw.Used,
 	}
-
 }

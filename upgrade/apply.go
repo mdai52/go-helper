@@ -14,7 +14,6 @@ import (
 )
 
 func Apply(rq *RequesParam) error {
-
 	logger := logman.Named("upgrade")
 
 	logger.Info(
@@ -63,11 +62,9 @@ func Apply(rq *RequesParam) error {
 	}
 
 	return nil
-
 }
 
 func CheckVersion(rq *RequesParam) (*UpdateInfo, error) {
-
 	info := &UpdateInfo{}
 
 	url := rq.Server
@@ -93,11 +90,9 @@ func CheckVersion(rq *RequesParam) (*UpdateInfo, error) {
 	}
 
 	return info, nil
-
 }
 
 func Restart() error {
-
 	self, err := os.Executable()
 	if err != nil {
 		return err
@@ -120,5 +115,4 @@ func Restart() error {
 
 	// Other OS
 	return syscall.Exec(self, args, env)
-
 }

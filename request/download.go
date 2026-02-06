@@ -10,7 +10,6 @@ import (
 )
 
 func Download(url, target string, isGzip bool) (string, error) {
-
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -37,11 +36,9 @@ func Download(url, target string, isGzip bool) (string, error) {
 
 	// 返回文件的名称
 	return SaveStream(reader, target)
-
 }
 
 func SaveStream(reader io.Reader, target string) (string, error) {
-
 	var err error
 	var writer *os.File
 
@@ -63,5 +60,4 @@ func SaveStream(reader io.Reader, target string) (string, error) {
 	}
 
 	return writer.Name(), nil
-
 }

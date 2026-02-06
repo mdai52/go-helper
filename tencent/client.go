@@ -15,7 +15,6 @@ import (
 )
 
 func Request(rq *ReqeustParam) (any, error) {
-
 	resp, err := newClient(rq)
 
 	if err != nil {
@@ -30,11 +29,9 @@ func Request(rq *ReqeustParam) (any, error) {
 	}
 
 	return res.Response, nil
-
 }
 
 func newClient(rq *ReqeustParam) (*th.CommonResponse, error) {
-
 	cpf := tp.NewClientProfile()
 
 	// 调试开关
@@ -72,11 +69,9 @@ func newClient(rq *ReqeustParam) (*th.CommonResponse, error) {
 	err := client.Send(request, response)
 
 	return response, err
-
 }
 
 func getSDKError(e error) error {
-
 	se := te.TencentCloudSDKError{}
 
 	if mapstructure.Decode(e, &se) != nil {
@@ -91,5 +86,4 @@ func getSDKError(e error) error {
 	msg := strings.Split(exp.ReplaceAllString(se.Message, ""), "\n")[0]
 
 	return errors.New(msg)
-
 }

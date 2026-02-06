@@ -11,7 +11,6 @@ var onQuitFuncs []func()
 
 // 注册退出时的回调函数
 func Register(onExit func()) {
-
 	onQuitFuncs = append(onQuitFuncs, onExit)
 
 	// 避免重复注册断信号通道
@@ -33,14 +32,11 @@ func Register(onExit func()) {
 		CallQuitFuncs()
 		os.Exit(0) // 退出
 	}()
-
 }
 
 // 调用所有退出函数
 func CallQuitFuncs() {
-
 	for _, fn := range onQuitFuncs {
 		fn()
 	}
-
 }

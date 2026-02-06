@@ -9,7 +9,6 @@ import (
 )
 
 func Connect(ws *websocket.Conn, opt *SSHClientOption) error {
-
 	defer ws.Close()
 
 	// 创建客户端
@@ -67,5 +66,4 @@ func Connect(ws *websocket.Conn, opt *SSHClientOption) error {
 	}
 
 	return nil
-
 }

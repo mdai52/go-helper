@@ -18,7 +18,6 @@ type Client struct {
 }
 
 func (c *Client) Request() ([]byte, error) {
-
 	var (
 		err  error
 		body io.Reader
@@ -51,32 +50,25 @@ func (c *Client) Request() ([]byte, error) {
 	// 读取数据
 	defer resp.Body.Close()
 	return io.ReadAll(resp.Body)
-
 }
 
 func (c *Client) JsonRequest() ([]byte, error) {
-
 	if c.isBodyMethod() && c.Headers["Content-Type"] == "" {
 		c.Headers["Content-Type"] = "application/json"
 	}
 
 	return c.Request()
-
 }
 
 func (c *Client) TextRequest() (string, error) {
-
 	if c.isBodyMethod() && c.Headers["Content-Type"] == "" {
 		c.Headers["Content-Type"] = "application/x-www-form-urlencoded"
 	}
 
 	body, err := c.Request()
 	return string(body), err
-
 }
 
 func (c *Client) isBodyMethod() bool {
-
 	return strings.Contains("POST,PUT,PATCH", c.Method)
-
 }

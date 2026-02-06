@@ -9,7 +9,6 @@ import (
 
 // 释放 embed.FS
 func ReleaseEmbedFS(efs embed.FS, root string, args ...string) (string, error) {
-
 	pattern := "efs-*"
 	if len(args) > 0 {
 		pattern = args[0]
@@ -52,5 +51,4 @@ func ReleaseEmbedFS(efs embed.FS, root string, args ...string) (string, error) {
 
 	// 返回临时目录的路径
 	return tempDir, nil
-
 }

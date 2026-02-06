@@ -9,7 +9,6 @@ import (
 // 随机字符串
 
 func Rand(length uint) string {
-
 	rs := make([]string, length)
 
 	for i := uint(0); i < length; i++ {
@@ -24,5 +23,4 @@ func Rand(length uint) string {
 	}
 
 	return strings.Join(rs, "")
-
 }

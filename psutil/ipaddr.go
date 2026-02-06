@@ -13,7 +13,6 @@ var publicIpv4 string
 var publicIpv6 string
 
 func PublicAddress(force bool) (string, string) {
-
 	if force || (publicIpv4 == "" && publicIpv6 == "") {
 		v4 := request.TimingGet("http://ipv4.rehi.org/ip", request.H{}, 10)
 		v6 := request.TimingGet("http://ipv6.rehi.org/ip", request.H{}, 10)
@@ -22,13 +21,11 @@ func PublicAddress(force bool) (string, string) {
 	}
 
 	return publicIpv4, publicIpv6
-
 }
 
 // 设备 IP
 
 func InterfaceAddrs(name string) ([]string, []string) {
-
 	ipv4 := []string{}
 	ipv6 := []string{}
 
@@ -57,5 +54,4 @@ func InterfaceAddrs(name string) ([]string, []string) {
 	}
 
 	return ipv4, ipv6
-
 }

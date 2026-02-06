@@ -8,7 +8,6 @@ import (
 )
 
 func Request(rq *ReqeustParam) (any, error) {
-
 	client := request.Client{
 		Method: rq.Method,
 		Url:    endpoint + rq.Path,
@@ -30,11 +29,9 @@ func Request(rq *ReqeustParam) (any, error) {
 	}
 
 	return parseBody(body)
-
 }
 
 func parseBody(body []byte) (any, error) {
-
 	res := &ResponseData{}
 	err := json.Unmarshal(body, res)
 
@@ -61,5 +58,4 @@ func parseBody(body []byte) (any, error) {
 	}
 
 	return &OutputWithInfo{out, inf}, err
-
 }

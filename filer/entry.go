@@ -19,7 +19,6 @@ type FileInfo struct {
 
 // 列出目录中的所有文件
 func List(dir string) ([]*FileInfo, error) {
-
 	files, err := os.ReadDir(dir)
 	if err != nil {
 		return nil, err
@@ -46,12 +45,10 @@ func List(dir string) ([]*FileInfo, error) {
 	}
 
 	return list, nil
-
 }
 
 // 获取文件信息和内容
 func Detail(file string, read bool) (*FileInfo, error) {
-
 	info, err := os.Stat(file)
 	if err != nil {
 		return nil, err
@@ -78,12 +75,10 @@ func Detail(file string, read bool) (*FileInfo, error) {
 	}
 
 	return detail, nil
-
 }
 
 // 写入文件内容，目录不存在时自动创建
 func Write(file string, data []byte) error {
-
 	if dir := filepath.Dir(file); !Exists(dir) {
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return err
@@ -91,17 +86,14 @@ func Write(file string, data []byte) error {
 	}
 
 	return os.WriteFile(file, data, 0644)
-
 }
 
 // 获取软链接的真实路径
 func Readlink(file string) string {
-
 	if IsLink(file) {
 		if rp, err := os.Readlink(file); err == nil {
 			return rp
 		}
 	}
 	return ""
-
 }

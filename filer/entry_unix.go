@@ -10,7 +10,6 @@ import (
 )
 
 func getFileOwner(fileInfo os.FileInfo) (string, string, error) {
-
 	stat, ok := fileInfo.Sys().(*syscall.Stat_t)
 	if !ok {
 		return "", "", fmt.Errorf("Not a syscall.Stat_t")
@@ -27,5 +26,4 @@ func getFileOwner(fileInfo os.FileInfo) (string, string, error) {
 	}
 
 	return usr.Username, grp.Name, nil
-
 }

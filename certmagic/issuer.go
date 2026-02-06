@@ -9,7 +9,6 @@ import (
 )
 
 func newIssuer(rq *ReqeustParam) certmagic.ACMEIssuer {
-
 	issuer := certmagic.ACMEIssuer{
 		Agreed:                  true,
 		DisableHTTPChallenge:    true,
@@ -69,5 +68,4 @@ func newIssuer(rq *ReqeustParam) certmagic.ACMEIssuer {
 	}
 
 	return issuer
-
 }

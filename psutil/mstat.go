@@ -5,7 +5,6 @@ import (
 )
 
 func GoMemory() *GoMemoryStat {
-
 	mstat := &runtime.MemStats{}
 	runtime.ReadMemStats(mstat)
 
@@ -21,5 +20,4 @@ func GoMemory() *GoMemoryStat {
 		LastGC:     uint64(mstat.LastGC / 1e9),
 		NumGC:      mstat.NumGC,
 	}
-
 }

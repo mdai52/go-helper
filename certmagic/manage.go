@@ -12,7 +12,6 @@ import (
 var magicPool = map[string]*certmagic.Config{}
 
 func Manage(rq *ReqeustParam) error {
-
 	skey := openssl.Md5ToString(rq.Email + rq.SecretKey + rq.CaType)
 
 	magic, ok := magicPool[skey]
@@ -26,11 +25,9 @@ func Manage(rq *ReqeustParam) error {
 
 	domains := strings.Split(rq.Domain, ",")
 	return magic.ManageAsync(context.Background(), domains)
-
 }
 
 func Unmanage(domain string) {
-
 	magic, ok := magicPool[domain]
 	domains := strings.Split(domain, ",")
 
@@ -40,11 +37,9 @@ func Unmanage(domain string) {
 			magic.RevokeCert(context.Background(), d, 0, false)
 		}
 	}
-
 }
 
 func CertDetail(domain string) (*Certificate, error) {
-
 	cert := &Certificate{}
 
 	magic, ok := magicPool[domain]
@@ -74,5 +69,4 @@ func CertDetail(domain string) (*Certificate, error) {
 	}
 
 	return cert, err
-
 }

@@ -18,7 +18,6 @@ type SSHClientOption struct {
 }
 
 func NewSSHClient(option *SSHClientOption) (*ssh.Client, error) {
-
 	if !strings.Contains(option.Addr, ":") {
 		option.Addr = option.Addr + ":22"
 	}
@@ -32,11 +31,9 @@ func NewSSHClient(option *SSHClientOption) (*ssh.Client, error) {
 	}
 
 	return nil, errors.New("SSHClient: no Password or PrivateKey")
-
 }
 
 func NewSSHClientWithPassword(option *SSHClientOption) (*ssh.Client, error) {
-
 	auth := ssh.Password(option.Password)
 
 	config := &ssh.ClientConfig{
@@ -47,11 +44,9 @@ func NewSSHClientWithPassword(option *SSHClientOption) (*ssh.Client, error) {
 	}
 
 	return ssh.Dial("tcp", option.Addr, config)
-
 }
 
 func NewSSHClientWithPrivateKey(option *SSHClientOption) (*ssh.Client, error) {
-
 	signer, err := ssh.ParsePrivateKey([]byte(option.PrivateKey))
 
 	if err != nil {
@@ -68,5 +63,4 @@ func NewSSHClientWithPrivateKey(option *SSHClientOption) (*ssh.Client, error) {
 	}
 
 	return ssh.Dial("tcp", option.Addr, config)
-
 }

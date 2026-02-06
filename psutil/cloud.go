@@ -9,7 +9,6 @@ import (
 // 云实例 Id
 
 func CloudInstanceId() string {
-
 	var url string
 	var mid string
 
@@ -56,5 +55,4 @@ func CloudInstanceId() string {
 	}
 
 	return mid
-
 }

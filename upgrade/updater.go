@@ -24,7 +24,6 @@ type Updater struct {
 }
 
 func (u *Updater) Init() error {
-
 	if u.NewVersion == "" {
 		u.NewVersion = "new"
 	}
@@ -48,11 +47,9 @@ func (u *Updater) Init() error {
 	u.NewBinary = u.TargetPath + "-" + u.NewVersion
 
 	return nil
-
 }
 
 func (u *Updater) VerifyChecksum() error {
-
 	if u.Checksum == nil {
 		return nil
 	}
@@ -76,11 +73,9 @@ func (u *Updater) VerifyChecksum() error {
 	}
 
 	return nil
-
 }
 
 func (u *Updater) CommitBinary() error {
-
 	// check the checksum if needed
 	if err := u.VerifyChecksum(); err != nil {
 		return err
@@ -110,5 +105,4 @@ func (u *Updater) CommitBinary() error {
 	os.Remove(originFile)
 
 	return nil
-
 }

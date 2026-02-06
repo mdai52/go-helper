@@ -12,7 +12,6 @@ import (
 var CertEvent func(evt string, data map[string]any)
 
 func newMagic(iss certmagic.ACMEIssuer, dir string) *certmagic.Config {
-
 	config := certmagic.Config{
 		Storage: &certmagic.FileStorage{
 			Path: dir,
@@ -44,5 +43,4 @@ func newMagic(iss certmagic.ACMEIssuer, dir string) *certmagic.Config {
 	})
 
 	return certmagic.New(cache, config)
-
 }

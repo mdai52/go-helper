@@ -6,7 +6,6 @@ import (
 
 // 删除文本中每一行的公共前导空白
 func Dedent(text string) string {
-
 	lines := strings.Split(text, "\n")
 	minIndent := -1
 
@@ -40,5 +39,4 @@ func Dedent(text string) string {
 	}
 
 	return strings.Join(lines[start:end], "\n")
-
 }

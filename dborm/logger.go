@@ -17,7 +17,6 @@ type Logger struct {
 }
 
 func NewLogger() logger.Interface {
-
 	logger.Default = &Logger{
 		logger: logman.Named("gorm"),
 		config: &logger.Config{
@@ -27,36 +26,26 @@ func NewLogger() logger.Interface {
 	}
 
 	return logger.Default
-
 }
 
 func (l Logger) LogMode(level logger.LogLevel) logger.Interface {
-
 	l.config.LogLevel = level
 	return l
-
 }
 
 func (l Logger) Info(ctx context.Context, msg string, args ...any) {
-
 	l.logger.Info(fmt.Sprintf(msg, args...))
-
 }
 
 func (l Logger) Warn(ctx context.Context, msg string, args ...any) {
-
 	l.logger.Warn(fmt.Sprintf(msg, args...))
-
 }
 
 func (l Logger) Error(ctx context.Context, msg string, args ...any) {
-
 	l.logger.Error(fmt.Sprintf(msg, args...))
-
 }
 
 func (l Logger) Trace(ctx context.Context, begin time.Time, fn func() (string, int64), err error) {
-
 	cfg := l.config
 	sql, rows := fn()
 	elapsed := time.Since(begin)
@@ -70,5 +59,4 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fn func() (string, i
 	default:
 		l.logger.Info("trace query", "sql", sql, "rows", rows, "elapsed", elapsed)
 	}
-
 }

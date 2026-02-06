@@ -15,7 +15,6 @@ import (
 )
 
 func newScript(code string, ext string) (string, error) {
-
 	tf, err := os.CreateTemp("", "tmp-*"+ext)
 
 	if err != nil {
@@ -45,11 +44,9 @@ func newScript(code string, ext string) (string, error) {
 	}
 
 	return tf.Name(), nil
-
 }
 
 func execScript(bin string, arg []string, data *ExecPayload) (string, error) {
-
 	logman.Debug("执行应用程序", "bin", bin, "arg", arg)
 
 	// 上下文
@@ -83,11 +80,9 @@ func execScript(bin string, arg []string, data *ExecPayload) (string, error) {
 	}
 
 	return str, err
-
 }
 
 func detectLineEnding(code string) string {
-
 	if strings.Contains(code, "\r\n") {
 		return "windows"
 	}
@@ -99,5 +94,4 @@ func detectLineEnding(code string) string {
 	}
 
 	return "unknown"
-
 }
