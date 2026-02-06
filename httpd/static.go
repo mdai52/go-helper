@@ -33,9 +33,9 @@ func StaticEmbed(efs embed.FS, prefix, subdir string) {
 }
 
 func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
-	fileServer := http.FileServer(hfs)
+	fileHandler := http.FileServer(hfs)
 	if prefix != "" {
-		fileServer = http.StripPrefix(prefix, fileServer)
+		fileHandler = http.StripPrefix(prefix, fileHandler)
 	}
 
 	return func(c *gin.Context) {
@@ -50,7 +50,7 @@ func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
 			// 检查文件是否存在
 			if f, err := hfs.Open(cleanPath); err == nil {
 				f.Close()
-				fileServer.ServeHTTP(c.Writer, c.Request)
+				fileHandler.ServeHTTP(c.Writer, c.Request)
 				c.Abort()
 			}
 		}

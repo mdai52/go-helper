@@ -11,15 +11,8 @@ import (
 
 var server *http.Server
 
-func Server(addr string, options ...any) {
-	if engine == nil {
-		if len(options) > 0 {
-			Engine(options[0].(bool))
-		} else {
-			Engine(false)
-		}
-	}
-
+func Server(addr string, debug bool) {
+	Engine(debug)
 	server = &http.Server{
 		Addr:         addr,
 		Handler:      engine,
