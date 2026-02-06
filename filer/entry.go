@@ -77,6 +77,29 @@ func Detail(file string, read bool) (*FileInfo, error) {
 	return detail, nil
 }
 
+// 获取文件内容
+func Read(file string) ([]byte, error) {
+	return os.ReadFile(file)
+}
+
+// 追加写入文件内容
+func Append(file string, data []byte) error {
+	if dir := filepath.Dir(file); !Exists(dir) {
+		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
+			return err
+		}
+	}
+
+	f, err := os.OpenFile(file, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	_, err = f.Write(data)
+	return err
+}
+
 // 写入文件内容，目录不存在时自动创建
 func Write(file string, data []byte) error {
 	if dir := filepath.Dir(file); !Exists(dir) {

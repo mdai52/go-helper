@@ -7,7 +7,6 @@ import (
 )
 
 // 加密字符串
-
 func Des3Encrypt(s, p string) (string, error) {
 	sb := []byte(s)
 
@@ -21,7 +20,6 @@ func Des3Encrypt(s, p string) (string, error) {
 }
 
 // 解密字符串
-
 func Des3Decrypt(s, p string) (string, error) {
 	sb, err := hex.DecodeString(s)
 	if err != nil {

@@ -32,3 +32,11 @@ func Exists(p string) bool {
 
 	return true
 }
+
+// 判断文件是否不存在
+func NotExist(p string) bool {
+	if _, err := os.Stat(p); err != nil {
+		return os.IsNotExist(err)
+	}
+	return false
+}

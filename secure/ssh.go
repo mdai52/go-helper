@@ -9,6 +9,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+// 生成 SSH 密钥对
 func NewSSHKeypair() (string, string, error) {
 	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
@@ -28,6 +29,7 @@ func NewSSHKeypair() (string, string, error) {
 	return string(privateKeyBytes), string(publicKeyBytes), nil
 }
 
+// 生成 SSH 公钥
 func NewSSHPublicKey(privatekey *rsa.PublicKey) ([]byte, error) {
 	publicKey, err := ssh.NewPublicKey(privatekey)
 	if err != nil {
