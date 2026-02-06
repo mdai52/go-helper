@@ -84,7 +84,7 @@ func Read(file string) ([]byte, error) {
 
 // 追加写入文件内容
 func Append(file string, data []byte) error {
-	if dir := filepath.Dir(file); !Exists(dir) {
+	if dir := filepath.Dir(file); NotExist(dir) {
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return err
 		}
@@ -102,7 +102,7 @@ func Append(file string, data []byte) error {
 
 // 写入文件内容，目录不存在时自动创建
 func Write(file string, data []byte) error {
-	if dir := filepath.Dir(file); !Exists(dir) {
+	if dir := filepath.Dir(file); NotExist(dir) {
 		if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 			return err
 		}
