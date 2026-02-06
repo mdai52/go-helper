@@ -4,7 +4,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/schema"
 
-	"github.com/opentdp/go-helper/logman"
+	"github.com/rehiy/pango/logman"
 )
 
 var Db *gorm.DB

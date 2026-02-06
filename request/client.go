@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentdp/go-helper/logman"
+	"github.com/rehiy/pango/logman"
 )
 
 type Client struct {

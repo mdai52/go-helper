@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/opentdp/go-helper/logman"
+	"github.com/rehiy/pango/logman"
 )
 
 var engine *gin.Engine

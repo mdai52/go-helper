@@ -1,4 +1,4 @@
-module github.com/opentdp/go-helper
+module github.com/rehiy/pango
 
 go 1.21
 

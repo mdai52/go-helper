@@ -21,7 +21,7 @@ import (
 	"golang.org/x/crypto/acme"
 	"golang.org/x/net/idna"
 
-	"github.com/opentdp/go-helper/logman"
+	"github.com/rehiy/pango/logman"
 )
 
 type Manager struct {

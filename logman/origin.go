@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/opentdp/go-helper/onquit"
+	"github.com/rehiy/pango/onquit"
 )
 
 var (

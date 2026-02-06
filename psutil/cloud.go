@@ -3,7 +3,7 @@ package psutil
 import (
 	"strings"
 
-	"github.com/opentdp/go-helper/request"
+	"github.com/rehiy/pango/request"
 )
 
 // 云实例 Id

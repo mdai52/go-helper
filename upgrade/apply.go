@@ -9,8 +9,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/opentdp/go-helper/logman"
-	"github.com/opentdp/go-helper/request"
+	"github.com/rehiy/pango/logman"
+	"github.com/rehiy/pango/request"
 )
 
 func Apply(rq *RequesParam) error {

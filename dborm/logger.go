@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/opentdp/go-helper/logman"
+	"github.com/rehiy/pango/logman"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )

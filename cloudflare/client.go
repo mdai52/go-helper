@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/opentdp/go-helper/request"
+	"github.com/rehiy/pango/request"
 )
 
 func Request(rq *ReqeustParam) (any, error) {

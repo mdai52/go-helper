@@ -4,7 +4,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/opentdp/go-helper/request"
+	"github.com/rehiy/pango/request"
 )
 
 // 公网 IP

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/opentdp/go-helper/logman"
-	"github.com/opentdp/go-helper/onquit"
+	"github.com/rehiy/pango/logman"
+	"github.com/rehiy/pango/onquit"
 )
 
 var server *http.Server

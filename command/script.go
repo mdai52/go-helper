@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/opentdp/go-helper/logman"
-	"github.com/opentdp/go-helper/strutil"
+	"github.com/rehiy/pango/logman"
+	"github.com/rehiy/pango/strutil"
 )
 
 func newScript(code string, ext string) (string, error) {
