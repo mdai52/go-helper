@@ -11,6 +11,10 @@ import (
 var engine *gin.Engine
 
 func Engine(debug bool) *gin.Engine {
+	if engine != nil {
+		return engine
+	}
+
 	if debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
