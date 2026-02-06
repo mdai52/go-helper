@@ -25,7 +25,7 @@ func IsLink(p string) bool {
 }
 
 // 判断文件是否存在
-func Exists(p string) bool {
+func Exist(p string) bool {
 	if _, err := os.Stat(p); err != nil {
 		return !os.IsNotExist(err)
 	}
