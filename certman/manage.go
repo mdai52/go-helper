@@ -292,7 +292,7 @@ func (m *Manager) fulfill(ctx context.Context, chal *acme.Challenge, domain stri
 	}
 
 	record := []libdns.Record{
-		{Type: "TXT", Name: "_acme-challenge", Value: value},
+		&libdns.TXT{Name: "_acme-challenge", Text: value},
 	}
 
 	if _, err = m.DnsProvider.AppendRecords(ctx, domain, record); err != nil {
