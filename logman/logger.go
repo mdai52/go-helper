@@ -28,6 +28,8 @@ func (l *Logger) log(level slog.Level, msg string, args ...any) {
 	l.logger.Log(l.ctx, level, msg, args...)
 }
 
+// WithContext sets the context
+
 func (l *Logger) WithContext(ctx context.Context) *Logger {
 	l.ctx = ctx
 	return l
