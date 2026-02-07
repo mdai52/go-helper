@@ -48,7 +48,7 @@ func List(dir string) ([]*FileInfo, error) {
 }
 
 // 获取文件信息和内容
-func Detail(file string, read bool) (*FileInfo, error) {
+func Info(file string, read bool) (*FileInfo, error) {
 	info, err := os.Stat(file)
 	if err != nil {
 		return nil, err
@@ -82,6 +82,22 @@ func Read(file string) ([]byte, error) {
 	return os.ReadFile(file)
 }
 
+// 获取文件内容
+func ReadText(file string) (string, error) {
+	bytes, err := os.ReadFile(file)
+	return string(bytes), err
+}
+
+// 获取软链接的真实路径
+func Readlink(file string) string {
+	if IsLink(file) {
+		if rp, err := os.Readlink(file); err == nil {
+			return rp
+		}
+	}
+	return ""
+}
+
 // 追加写入文件内容
 func Append(file string, data []byte) error {
 	if dir := filepath.Dir(file); NotExist(dir) {
@@ -109,14 +125,4 @@ func Write(file string, data []byte) error {
 	}
 
 	return os.WriteFile(file, data, 0644)
-}
-
-// 获取软链接的真实路径
-func Readlink(file string) string {
-	if IsLink(file) {
-		if rp, err := os.Readlink(file); err == nil {
-			return rp
-		}
-	}
-	return ""
 }
