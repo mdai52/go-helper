@@ -5,7 +5,7 @@ import (
 	"github.com/libdns/alidns"
 	"github.com/libdns/cloudflare"
 	"github.com/libdns/tencentcloud"
-	"github.com/mholt/acmez/acme"
+	"github.com/mholt/acmez/v3/acme"
 )
 
 func newIssuer(rq *ReqeustParam) certmagic.ACMEIssuer {
@@ -47,22 +47,28 @@ func newIssuer(rq *ReqeustParam) certmagic.ACMEIssuer {
 	switch rq.Provider {
 	case "alibaba":
 		issuer.DNS01Solver = &certmagic.DNS01Solver{
-			DNSProvider: &alidns.Provider{
-				AccKeyID:     rq.SecretId,
-				AccKeySecret: rq.SecretKey,
+			DNSManager: certmagic.DNSManager{
+				DNSProvider: &alidns.Provider{
+					AccKeyID:     rq.SecretId,
+					AccKeySecret: rq.SecretKey,
+				},
 			},
 		}
 	case "cloudflare":
 		issuer.DNS01Solver = &certmagic.DNS01Solver{
-			DNSProvider: &cloudflare.Provider{
-				APIToken: rq.SecretKey,
+			DNSManager: certmagic.DNSManager{
+				DNSProvider: &cloudflare.Provider{
+					APIToken: rq.SecretKey,
+				},
 			},
 		}
 	case "tencent":
 		issuer.DNS01Solver = &certmagic.DNS01Solver{
-			DNSProvider: &tencentcloud.Provider{
-				SecretId:  rq.SecretId,
-				SecretKey: rq.SecretKey,
+			DNSManager: certmagic.DNSManager{
+				DNSProvider: &tencentcloud.Provider{
+					SecretId:  rq.SecretId,
+					SecretKey: rq.SecretKey,
+				},
 			},
 		}
 	}
