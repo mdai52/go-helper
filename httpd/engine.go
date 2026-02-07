@@ -32,6 +32,11 @@ func Engine(debug bool) *gin.Engine {
 	return engine
 }
 
+func NoRoute(handlers ...gin.HandlerFunc) *gin.Engine {
+	engine.NoRoute(handlers...)
+	return engine
+}
+
 func Group(relativePath string, handlers ...gin.HandlerFunc) *gin.RouterGroup {
 	return engine.Group(relativePath, handlers...)
 }

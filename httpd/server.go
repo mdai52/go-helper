@@ -13,6 +13,7 @@ var server *http.Server
 
 func Server(addr string, debug bool) {
 	Engine(debug)
+
 	server = &http.Server{
 		Addr:         addr,
 		Handler:      engine,
