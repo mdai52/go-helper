@@ -15,17 +15,17 @@ func Engine(debug bool) *gin.Engine {
 		return engine
 	}
 
-	if debug {
-		gin.SetMode(gin.DebugMode)
-	} else {
-		gin.SetMode(gin.ReleaseMode)
-	}
-
 	gin.DefaultWriter = logman.AutoWriter("gin-access")
 	gin.DefaultErrorWriter = logman.AutoWriter("gin-error")
 
 	mime.AddExtensionType(".css", "text/css; charset=utf-8")
 	mime.AddExtensionType(".js", "text/javascript; charset=utf-8")
+
+	if debug {
+		gin.SetMode(gin.DebugMode)
+	} else {
+		gin.SetMode(gin.ReleaseMode)
+	}
 
 	engine = gin.Default()
 

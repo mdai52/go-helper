@@ -4,7 +4,6 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -39,20 +38,10 @@ func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
-		relPath := strings.TrimPrefix(c.Request.URL.Path, prefix)
-		// 检查是否匹配或是否在根目录下
-		if len(relPath) < len(c.Request.URL.Path) || (prefix == "" && c.Request.URL.Path != "") {
-			// 清理路径：空路径替换为根目录
-			cleanPath := strings.TrimPrefix(relPath, "/")
-			if cleanPath == "" {
-				cleanPath = "."
-			}
-			// 检查文件是否存在
-			if f, err := hfs.Open(cleanPath); err == nil {
-				f.Close()
-				fileHandler.ServeHTTP(c.Writer, c.Request)
-				c.Abort()
-			}
+		fileHandler.ServeHTTP(c.Writer, c.Request)
+		// 如果成功处理了文件，则中止后续处理
+		if c.Writer.Written() {
+			c.Abort()
 		}
 	}
 }
