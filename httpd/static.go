@@ -10,12 +10,12 @@ import (
 
 func Static(root, prefix string) {
 	hfs := gin.Dir(root, false)
-	engine.Use(StaticServe(hfs, prefix))
+	engine.NoRoute(StaticServe(hfs, prefix))
 }
 
 func StaticIndex(root, prefix string) {
 	hfs := gin.Dir(root, true)
-	engine.Use(StaticServe(hfs, prefix))
+	engine.NoRoute(StaticServe(hfs, prefix))
 }
 
 func StaticEmbed(efs embed.FS, prefix, subdir string) {
@@ -28,7 +28,7 @@ func StaticEmbed(efs embed.FS, prefix, subdir string) {
 		hfs = http.FS(sub)
 	}
 
-	engine.Use(StaticServe(hfs, prefix))
+	engine.NoRoute(StaticServe(hfs, prefix))
 }
 
 func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
@@ -39,9 +39,5 @@ func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		fileHandler.ServeHTTP(c.Writer, c.Request)
-		// 如果成功处理了文件，则中止后续处理
-		if c.Writer.Written() {
-			c.Abort()
-		}
 	}
 }
