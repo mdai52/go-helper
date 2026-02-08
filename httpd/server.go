@@ -9,16 +9,49 @@ import (
 	"github.com/rehiy/pango/onquit"
 )
 
-var server *http.Server
+type Config struct {
+	Debug        bool
+	ReadTimeout  time.Duration
+	WriteTimeout time.Duration
+}
 
-func Server(addr string, debug bool) {
-	Engine(debug)
+type Option func(*Config)
 
-	server = &http.Server{
-		Addr:         addr,
-		Handler:      engine,
+func WithDebug(debug bool) Option {
+	return func(cfg *Config) {
+		cfg.Debug = debug
+	}
+}
+
+func WithReadTimeout(d time.Duration) Option {
+	return func(cfg *Config) {
+		cfg.ReadTimeout = d
+	}
+}
+
+func WithWriteTimeout(d time.Duration) Option {
+	return func(cfg *Config) {
+		cfg.WriteTimeout = d
+	}
+}
+
+func Server(addr string, options ...Option) {
+	cfg := &Config{
+		Debug:        false,
 		ReadTimeout:  300 * time.Second,
 		WriteTimeout: 300 * time.Second,
+	}
+
+	for _, opt := range options {
+		opt(cfg)
+	}
+
+	Engine(cfg.Debug)
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      engine,
+		ReadTimeout:  cfg.ReadTimeout,
+		WriteTimeout: cfg.WriteTimeout,
 	}
 
 	onquit.Register(func() {
