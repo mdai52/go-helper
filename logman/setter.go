@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -18,6 +19,10 @@ type Config struct {
 	Filename string `note:"默认日志文件名"`
 }
 
+func Default() *slog.Logger {
+	return slog.Default()
+}
+
 func SetDefault(args *Config) {
 	config.Level = args.Level
 	config.Target = args.Target
@@ -28,17 +33,13 @@ func SetDefault(args *Config) {
 
 func NewLogger(name string) *slog.Logger {
 	var level slog.Level
-	var handler slog.Handler
-
 	level.UnmarshalText([]byte(config.Level))
 
 	option := &slog.HandlerOptions{
 		Level: level,
 	}
 
-	writer := AutoWriter(name)
-	handler = slog.NewTextHandler(writer, option)
-
+	handler := slog.NewTextHandler(AutoWriter(name), option)
 	return slog.New(handler)
 }
 
@@ -58,7 +59,10 @@ func AutoWriter(name string) io.Writer {
 }
 
 func FileWriter(name string) *lumberjack.Logger {
-	f := filepath.Join(config.Storage, name) + ".log"
+	f := name + ".log"
+	if !strings.HasPrefix(name, "/") {
+		f = filepath.Join(config.Storage, name) + ".log"
+	}
 
 	if d := filepath.Dir(f); d != "" && d != "." {
 		os.MkdirAll(d, 0755)
