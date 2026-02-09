@@ -16,10 +16,14 @@ type Logger struct {
 }
 
 func Named(name string) *Logger {
+	return NamedWithContext(name, context.Background())
+}
+
+func NamedWithContext(name string, ctx context.Context) *Logger {
 	return &Logger{
 		name:   name,
 		logger: NewLogger(name),
-		ctx:    context.Background(),
+		ctx:    ctx,
 	}
 }
 

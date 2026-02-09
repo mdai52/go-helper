@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/rehiy/pango/logman"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	"github.com/rehiy/pango/logman"
 )
 
 type Logger struct {
@@ -34,15 +35,15 @@ func (l Logger) LogMode(level logger.LogLevel) logger.Interface {
 }
 
 func (l Logger) Info(ctx context.Context, msg string, args ...any) {
-	l.logger.Info(fmt.Sprintf(msg, args...))
+	l.logger.WithContext(ctx).Info(fmt.Sprintf(msg, args...))
 }
 
 func (l Logger) Warn(ctx context.Context, msg string, args ...any) {
-	l.logger.Warn(fmt.Sprintf(msg, args...))
+	l.logger.WithContext(ctx).Warn(fmt.Sprintf(msg, args...))
 }
 
 func (l Logger) Error(ctx context.Context, msg string, args ...any) {
-	l.logger.Error(fmt.Sprintf(msg, args...))
+	l.logger.WithContext(ctx).Error(fmt.Sprintf(msg, args...))
 }
 
 func (l Logger) Trace(ctx context.Context, begin time.Time, fn func() (string, int64), err error) {
@@ -52,11 +53,11 @@ func (l Logger) Trace(ctx context.Context, begin time.Time, fn func() (string, i
 
 	switch {
 	case err != nil && (!errors.Is(err, gorm.ErrRecordNotFound) || !cfg.IgnoreRecordNotFoundError):
-		l.logger.Error("trace error", "error", err, "sql", sql, "rows", rows, "elapsed", elapsed)
+		l.logger.WithContext(ctx).Error("trace error", "error", err, "sql", sql, "rows", rows, "elapsed", elapsed)
 	case elapsed > cfg.SlowThreshold && cfg.SlowThreshold != 0:
 		slow := fmt.Sprintf("trace slow sql >= %v", cfg.SlowThreshold)
-		l.logger.Warn(slow, "sql", sql, "rows", rows, "elapsed", elapsed)
+		l.logger.WithContext(ctx).Warn(slow, "sql", sql, "rows", rows, "elapsed", elapsed)
 	default:
-		l.logger.Info("trace query", "sql", sql, "rows", rows, "elapsed", elapsed)
+		l.logger.WithContext(ctx).Info("trace query", "sql", sql, "rows", rows, "elapsed", elapsed)
 	}
 }
