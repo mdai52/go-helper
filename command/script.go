@@ -5,7 +5,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
@@ -67,7 +67,7 @@ func execScript(bin string, arg []string, data *ExecPayload) (string, error) {
 	if data.WorkDirectory != "" {
 		cmd.Dir = data.WorkDirectory
 	} else {
-		cmd.Dir = path.Dir(bin)
+		cmd.Dir = filepath.Dir(bin)
 	}
 
 	// 获取输出信息

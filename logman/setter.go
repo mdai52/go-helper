@@ -4,7 +4,7 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"path"
+	"path/filepath"
 
 	"gopkg.in/natefinch/lumberjack.v2"
 )
@@ -24,10 +24,6 @@ func SetDefault(args *Config) {
 	config.Storage = args.Storage
 
 	slog.SetDefault(NewLogger(args.Filename))
-
-	if config.Storage != "" && config.Storage != "." {
-		os.MkdirAll(config.Storage, 0755)
-	}
 }
 
 func NewLogger(name string) *slog.Logger {
@@ -62,7 +58,11 @@ func AutoWriter(name string) io.Writer {
 }
 
 func FileWriter(name string) *lumberjack.Logger {
-	f := path.Join(config.Storage, name) + ".log"
+	f := filepath.Join(config.Storage, name) + ".log"
+
+	if d := filepath.Dir(f); d != "" && d != "." {
+		os.MkdirAll(d, 0755)
+	}
 
 	return &lumberjack.Logger{
 		Compress:   true, // 是否压缩/归档旧文件

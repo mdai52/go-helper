@@ -2,7 +2,6 @@ package dborm
 
 import (
 	"os"
-	"path"
 	"path/filepath"
 
 	"github.com/glebarez/sqlite"
@@ -14,7 +13,7 @@ import (
 func useSqlite(args *Config) gorm.Dialector {
 	dbname := args.DbName
 	if args.Host != "" && !filepath.IsAbs(args.DbName) {
-		dbname = path.Join(args.Host, dbname)
+		dbname = filepath.Join(args.Host, dbname)
 	}
 	os.MkdirAll(filepath.Dir(dbname), 0755)
 
