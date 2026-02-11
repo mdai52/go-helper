@@ -68,7 +68,7 @@ func AutoWriter(name string) io.Writer {
 func FileWriter(name string) *lumberjack.Logger {
 	f := name + ".log"
 	if !strings.HasPrefix(name, "/") {
-		f = filepath.Join(config.Storage, name) + ".log"
+		f = filepath.Join(config.Storage, f)
 	}
 
 	if d := filepath.Dir(f); d != "" && d != "." {
