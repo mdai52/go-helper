@@ -11,13 +11,14 @@ import (
 func Rand(length uint) string {
 	rs := make([]string, length)
 
-	for i := uint(0); i < length; i++ {
+	for range length {
 		t := rand.Intn(3)
-		if t == 0 {
+		switch t {
+		case 0:
 			rs = append(rs, strconv.Itoa(rand.Intn(10)))
-		} else if t == 1 {
+		case 1:
 			rs = append(rs, string(rune(rand.Intn(26)+65)))
-		} else {
+		default:
 			rs = append(rs, string(rune(rand.Intn(26)+97)))
 		}
 	}
