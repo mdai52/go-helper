@@ -42,6 +42,10 @@ func NewLogger(name string) *slog.Logger {
 			if a.Key == slog.TimeKey {
 				a.Value = slog.StringValue(time.Now().Format("2006-01-02 15:04:05"))
 			}
+			// 清理 Logger 字段值开头的 . 和 /
+			if a.Key == "Logger" {
+				a.Value = slog.StringValue(strings.TrimLeft(a.Value.String(), "./"))
+			}
 			return a
 		},
 	}
