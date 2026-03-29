@@ -53,6 +53,9 @@ func (c *Client) Request() ([]byte, error) {
 }
 
 func (c *Client) JsonRequest() ([]byte, error) {
+	if c.Headers == nil {
+		c.Headers = make(map[string]string)
+	}
 	if c.isBodyMethod() && c.Headers["Content-Type"] == "" {
 		c.Headers["Content-Type"] = "application/json"
 	}
@@ -61,6 +64,9 @@ func (c *Client) JsonRequest() ([]byte, error) {
 }
 
 func (c *Client) TextRequest() (string, error) {
+	if c.Headers == nil {
+		c.Headers = make(map[string]string)
+	}
 	if c.isBodyMethod() && c.Headers["Content-Type"] == "" {
 		c.Headers["Content-Type"] = "application/x-www-form-urlencoded"
 	}
