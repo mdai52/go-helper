@@ -41,11 +41,11 @@ func parseBody(body []byte) (any, error) {
 
 	out := &Output{res.Result, ""}
 
-	if cap(res.Messages) > 0 {
+	if len(res.Messages) > 0 {
 		out.Messages = (res.Messages[0]).Message
 	}
 
-	if cap(res.Errors) > 0 {
+	if len(res.Errors) > 0 {
 		err = errors.New((res.Errors[0]).Message)
 	}
 
