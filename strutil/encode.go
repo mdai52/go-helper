@@ -9,7 +9,7 @@ import (
 func Gb18030ToUtf8(s string) string {
 	ret, err := simplifiedchinese.GB18030.NewDecoder().String(s)
 	if err == nil {
-		return string(ret)
+		return ret
 	}
 
 	return s
