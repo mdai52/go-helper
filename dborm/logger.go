@@ -17,16 +17,14 @@ type Logger struct {
 	logger *logman.Logger
 }
 
-func NewLogger() logger.Interface {
-	logger.Default = &Logger{
-		logger: logman.Named("gorm"),
+func NewLogger(l *logman.Logger) logger.Interface {
+	return &Logger{
 		config: &logger.Config{
-			IgnoreRecordNotFoundError: false,
 			SlowThreshold:             5 * time.Second,
+			IgnoreRecordNotFoundError: false,
 		},
+		logger: l,
 	}
-
-	return logger.Default
 }
 
 func (l Logger) LogMode(level logger.LogLevel) logger.Interface {

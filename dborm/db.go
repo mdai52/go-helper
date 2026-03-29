@@ -2,12 +2,14 @@ package dborm
 
 import (
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
 	"github.com/rehiy/pango/logman"
 )
 
 var Db *gorm.DB
+var RawLogger *logman.Logger
 
 type Config struct {
 	Type     string `note:"数据库类型"`
@@ -19,8 +21,13 @@ type Config struct {
 }
 
 func Connect(args *Config) *gorm.DB {
+	if RawLogger == nil {
+		RawLogger = logman.Named("gorm")
+		logger.Default = NewLogger(RawLogger)
+	}
+
 	config := &gorm.Config{
-		Logger: NewLogger(),
+		Logger: logger.Default,
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
