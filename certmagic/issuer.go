@@ -49,8 +49,8 @@ func newIssuer(rq *ReqeustParam) certmagic.ACMEIssuer {
 		issuer.DNS01Solver = &certmagic.DNS01Solver{
 			DNSManager: certmagic.DNSManager{
 				DNSProvider: &alidns.Provider{
-					AccKeyID:     rq.SecretId,
-					AccKeySecret: rq.SecretKey,
+					AccessKeyID:     rq.SecretId,
+					AccessKeySecret: rq.SecretKey,
 				},
 			},
 		}
