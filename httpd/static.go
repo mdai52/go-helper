@@ -4,6 +4,7 @@ import (
 	"embed"
 	"io/fs"
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 )
@@ -38,6 +39,22 @@ func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
 	}
 
 	return func(c *gin.Context) {
+		path := c.Request.URL.Path
+		f, err := hfs.Open(path)
+		if err == nil {
+			f.Close()
+			fileHandler.ServeHTTP(c.Writer, c.Request)
+			return
+		}
+
+		// 静态资源文件不存在时返回 404
+		if filepath.Ext(path) != "" {
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+
+		// SPA 路由：返回 index.html
+		c.Request.URL.Path = "/"
 		fileHandler.ServeHTTP(c.Writer, c.Request)
 	}
 }
