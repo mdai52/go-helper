@@ -58,6 +58,8 @@ type DetailStat struct {
 	DiskPartition []DiskPartition `note:"磁盘分区信息"`
 	DiskTotal     uint64          `note:"磁盘总量"`
 	DiskUsed      uint64          `note:"磁盘使用量"`
+	DiskReadBytes uint64          `note:"磁盘读取字节数"`
+	DiskWriteBytes uint64         `note:"磁盘写入字节数"`
 	SwapTotal     uint64          `note:"交换分区总量"`
 	SwapUsed      uint64          `note:"交换分区使用量"`
 }

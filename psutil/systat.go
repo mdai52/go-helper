@@ -45,6 +45,7 @@ func Summary(withAddr bool) *SummaryStat {
 func Detail(withAddr bool) *DetailStat {
 	ci, _ := cpu.Info()
 	ni, _ := net.IOCounters(true)
+	di, _ := disk.IOCounters()
 	dp, _ := disk.Partitions(false)
 	sw, _ := mem.SwapMemory()
 
@@ -100,6 +101,15 @@ func Detail(withAddr bool) *DetailStat {
 		}
 	}
 
+	// 磁盘 IO 信息
+
+	diskReadBytes := uint64(0)
+	diskWriteBytes := uint64(0)
+	for _, dio := range di {
+		diskReadBytes += dio.ReadBytes
+		diskWriteBytes += dio.WriteBytes
+	}
+
 	// 汇总信息
 
 	return &DetailStat{
@@ -111,6 +121,8 @@ func Detail(withAddr bool) *DetailStat {
 		diskPartition,
 		diskTotal,
 		diskUsed,
+		diskReadBytes,
+		diskWriteBytes,
 		sw.Total,
 		sw.Used,
 	}
