@@ -57,7 +57,7 @@ go get -u github.com/rehiy/pango
 
 | 模块 | 说明 |
 |------|------|
-| `psutil` | 系统信息采集，包括 CPU、内存、磁盘、网络等 |
+| `psutil` | 系统信息采集，包括 CPU、内存、硬盘、网络等 |
 | `command` | 系统命令执行工具 |
 
 ### 📝 日志与文件

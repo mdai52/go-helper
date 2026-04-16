@@ -101,7 +101,7 @@ func Detail(withAddr bool) *DetailStat {
 		}
 	}
 
-	// 磁盘 IO 信息
+	// 硬盘 IO 信息
 
 	diskReadBytes := uint64(0)
 	diskWriteBytes := uint64(0)
