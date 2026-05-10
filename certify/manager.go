@@ -4,13 +4,24 @@
 package certify
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
 	"net/http"
 	"sync"
 
 	"github.com/libdns/libdns"
 	"golang.org/x/crypto/acme"
 	"golang.org/x/crypto/acme/autocert"
+)
+
+// ACME 目录 URL
+const (
+	LetsEncryptStaging    = "https://acme-staging-v02.api.letsencrypt.org/directory"
+	LetsEncryptProduction = "https://acme-v02.api.letsencrypt.org/directory"
+	Buypass               = "https://api.buypass.com/acme/directory"
+	ZeroSSL              = "https://acme.zerossl.com/v2/DV90"
+	Google               = "https://dv.acme-v02.api.pki.goog/directory"
 )
 
 // Manager 证书管理器
@@ -28,6 +39,9 @@ type Manager struct {
 		Info(msg string, args ...any)
 		Error(msg string, args ...any)
 	}
+
+	// 事件回调
+	OnEvent func(event string, data map[string]any)
 
 	client *acme.Client
 	mu     sync.Mutex
@@ -52,43 +66,46 @@ func NewWithDirectory(email string, cache autocert.Cache, directoryURL string) *
 }
 
 // GetCertificate 获取证书（支持通配符域名）
-// 用于 tls.Config.GetCertificate 回调
 func (m *Manager) GetCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	// 通配符域名使用 DNS-01
 	if isWildcard(hello.ServerName) {
 		return m.getCertDNS01(hello.ServerName)
 	}
-	// 普通域名使用 autocert（HTTP-01/TLS-ALPN-01）
 	return m.Manager.GetCertificate(hello)
 }
 
-// GetCertificateForDomains 获取指定域名的证书
-// 支持多域名 SAN 和通配符
+// GetCertificateForDomains 获取指定域名的证书（支持多域名 SAN 和通配符）
 func (m *Manager) GetCertificateForDomains(domains []string) (*tls.Certificate, error) {
 	if len(domains) == 0 {
 		return nil, ErrNoDomains
 	}
 
-	// 检查是否有通配符
-	hasWildcard := false
 	for _, d := range domains {
 		if isWildcard(d) {
-			hasWildcard = true
-			break
+			return m.getCertDNS01(domains...)
 		}
 	}
 
-	if hasWildcard {
-		return m.getCertDNS01(domains...)
-	}
-
-	// 单域名使用 autocert
 	if len(domains) == 1 {
 		return m.getSingleCert(domains[0])
 	}
-
-	// 多域名 SAN 使用 DNS-01（更可靠）
 	return m.getCertDNS01(domains...)
+}
+
+// RevokeCert 吊销证书
+func (m *Manager) RevokeCert(ctx context.Context, domain string) error {
+	client, err := m.getClient(ctx)
+	if err != nil {
+		return err
+	}
+	cert, err := m.loadCert(domain)
+	if err != nil {
+		return err
+	}
+	accountURL := client.AccountURL()
+	if accountURL == "" {
+		return errors.New("account not registered")
+	}
+	return client.RevokeCert(ctx, accountURL, cert.Certificate[0], acme.CRLReasonUnspecified)
 }
 
 // TLSConfig 返回 TLS 配置
@@ -102,6 +119,13 @@ func (m *Manager) TLSConfig() *tls.Config {
 // HTTPHandler 返回 HTTP-01 验证处理器
 func (m *Manager) HTTPHandler(fallback http.Handler) http.Handler {
 	return m.Manager.HTTPHandler(fallback)
+}
+
+// emitEvent 触发事件
+func (m *Manager) emitEvent(event string, data map[string]any) {
+	if m.OnEvent != nil {
+		m.OnEvent(event, data)
+	}
 }
 
 // isWildcard 检查是否为通配符域名

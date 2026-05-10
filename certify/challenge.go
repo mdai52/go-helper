@@ -25,32 +25,45 @@ func (m *Manager) getSingleCert(domain string) (*tls.Certificate, error) {
 	// 尝试从缓存加载
 	if m.Cache != nil {
 		if cert, err := m.loadCert(domain); err == nil && !isCertExpired(cert) {
+			m.emitEvent("cached", map[string]any{"domains": []string{domain}})
 			return cert, nil
 		}
 	}
+
+	m.emitEvent("obtaining", map[string]any{"domains": []string{domain}})
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	client, err := m.getClient(ctx)
 	if err != nil {
+		m.emitEvent("failed", map[string]any{"domains": []string{domain}, "error": err.Error()})
 		return nil, err
 	}
 
 	// 获取授权
 	authz, err := client.Authorize(ctx, domain)
 	if err != nil {
+		m.emitEvent("failed", map[string]any{"domains": []string{domain}, "error": err.Error()})
 		return nil, err
 	}
 
 	// 完成验证
 	if authz.Status == acme.StatusPending {
 		if err := m.solveChallenge(ctx, client, authz); err != nil {
+			m.emitEvent("failed", map[string]any{"domains": []string{domain}, "error": err.Error()})
 			return nil, err
 		}
 	}
 
-	return m.createCertFromAuthz(ctx, client, domain)
+	cert, err := m.createCertFromAuthz(ctx, client, domain)
+	if err != nil {
+		m.emitEvent("failed", map[string]any{"domains": []string{domain}, "error": err.Error()})
+		return nil, err
+	}
+
+	m.emitEvent("obtained", map[string]any{"domains": []string{domain}, "expires": cert.Leaf.NotAfter.Unix()})
+	return cert, nil
 }
 
 // getCertDNS01 使用 DNS-01 获取证书（支持通配符和多域名）
@@ -64,17 +77,21 @@ func (m *Manager) getCertDNS01(domains ...string) (*tls.Certificate, error) {
 		for _, domain := range domains {
 			if cert, err := m.loadCert(domain); err == nil {
 				if !isCertExpired(cert) && certContainsAll(cert, domains) {
+					m.emitEvent("cached", map[string]any{"domains": domains})
 					return cert, nil
 				}
 			}
 		}
 	}
 
+	m.emitEvent("obtaining", map[string]any{"domains": domains})
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
 	defer cancel()
 
 	client, err := m.getClient(ctx)
 	if err != nil {
+		m.emitEvent("failed", map[string]any{"domains": domains, "error": err.Error()})
 		return nil, err
 	}
 
@@ -155,10 +172,12 @@ func (m *Manager) getCertDNS01(domains ...string) (*tls.Certificate, error) {
 
 	cert, err := m.createCert(ctx, client, order, domains)
 	if err != nil {
+		m.emitEvent("failed", map[string]any{"domains": domains, "error": err.Error()})
 		return nil, err
 	}
 
 	m.logInfo("certificate obtained", "domain", domains[0], "expires", cert.Leaf.NotAfter.Format("2006-01-02"))
+	m.emitEvent("obtained", map[string]any{"domains": domains, "expires": cert.Leaf.NotAfter.Unix()})
 	return cert, nil
 }
 
