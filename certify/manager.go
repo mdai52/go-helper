@@ -6,7 +6,6 @@ package certify
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"net/http"
 	"sync"
 
@@ -101,11 +100,8 @@ func (m *Manager) RevokeCert(ctx context.Context, domain string) error {
 	if err != nil {
 		return err
 	}
-	accountURL := client.AccountURL()
-	if accountURL == "" {
-		return errors.New("account not registered")
-	}
-	return client.RevokeCert(ctx, accountURL, cert.Certificate[0], acme.CRLReasonUnspecified)
+	// 使用账户密钥吊销证书
+	return client.RevokeCert(ctx, client.Key, cert.Certificate[0], acme.CRLReasonUnspecified)
 }
 
 // TLSConfig 返回 TLS 配置
