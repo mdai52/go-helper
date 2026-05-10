@@ -3,45 +3,60 @@ package psutil
 import (
 	"net"
 	"strings"
+	"sync"
 
 	"github.com/rehiy/libgo/request"
 )
 
-// 公网 IP
-
-var publicIpv4 string
-var publicIpv6 string
+// 公网 IP 缓存
+var (
+	publicIPv4   string
+	publicIPv6   string
+	publicAddrMu sync.RWMutex
+)
 
 func PublicAddress(force bool) (string, string) {
-	if force || (publicIpv4 == "" && publicIpv6 == "") {
-		v4 := request.TimingGet("http://ipv4.rehi.org/ip", request.H{}, 10)
-		v6 := request.TimingGet("http://ipv6.rehi.org/ip", request.H{}, 10)
-		publicIpv4 = strings.TrimSpace(v4)
-		publicIpv6 = strings.TrimSpace(v6)
+	publicAddrMu.RLock()
+	v4, v6 := publicIPv4, publicIPv6
+	publicAddrMu.RUnlock()
+
+	if !force && v4 != "" && v6 != "" {
+		return v4, v6
 	}
 
-	return publicIpv4, publicIpv6
+	newV4 := strings.TrimSpace(request.TimingGet("http://ipv4.rehi.org/ip", request.H{}, 10))
+	newV6 := strings.TrimSpace(request.TimingGet("http://ipv6.rehi.org/ip", request.H{}, 10))
+
+	publicAddrMu.Lock()
+	defer publicAddrMu.Unlock()
+
+	// 只更新非空值
+	if newV4 != "" {
+		publicIPv4 = newV4
+	}
+	if newV6 != "" {
+		publicIPv6 = newV6
+	}
+
+	return publicIPv4, publicIPv6
 }
 
-// 设备 IP
-
 func InterfaceAddrs(name string) ([]string, []string) {
-	ipv4 := []string{}
-	ipv6 := []string{}
-
-	addrs := []net.Addr{}
+	var addrs []net.Addr
 
 	if name == "" {
-		if list, _ := net.InterfaceAddrs(); list != nil {
-			addrs = list
-		}
-	} else {
-		if ift, _ := net.InterfaceByName(name); ift != nil {
-			if list, _ := ift.Addrs(); list != nil {
-				addrs = list
-			}
-		}
+		addrs, _ = net.InterfaceAddrs()
+	} else if ift, err := net.InterfaceByName(name); err == nil {
+		addrs, _ = ift.Addrs()
 	}
+
+	if len(addrs) == 0 {
+		return nil, nil
+	}
+
+	// 预分配容量
+	ipv4 := make([]string, 0, len(addrs))
+	ipv6 := make([]string, 0, len(addrs))
 
 	for _, ip := range addrs {
 		if ipnet, ok := ip.(*net.IPNet); ok && ipnet.IP.IsGlobalUnicast() {

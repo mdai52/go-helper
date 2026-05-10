@@ -8,7 +8,7 @@ import (
 	"github.com/mholt/acmez/v3/acme"
 )
 
-func newIssuer(rq *ReqeustParam) certmagic.ACMEIssuer {
+func newIssuer(rq *RequestParam) certmagic.ACMEIssuer {
 	issuer := certmagic.ACMEIssuer{
 		Agreed:                  true,
 		DisableHTTPChallenge:    true,

@@ -35,8 +35,8 @@ func Summary(withAddr bool) *SummaryStat {
 
 	if withAddr {
 		ipv4, ipv6 := PublicAddress(false)
-		stat.PublicIpv4 = ipv4
-		stat.PublicIpv6 = ipv6
+		stat.PublicIPv4 = ipv4
+		stat.PublicIPv6 = ipv6
 	}
 
 	return stat

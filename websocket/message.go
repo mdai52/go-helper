@@ -4,11 +4,11 @@ import "encoding/json"
 
 // Message WebSocket 消息结构
 type Message struct {
-	Method  string
-	TaskId  uint
-	Success bool
-	Message string
-	Payload any
+	Method  string `json:"method"`
+	TaskId  uint   `json:"taskId"`
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Payload any    `json:"payload"`
 }
 
 // GetPayload 解析 Payload 到目标类型

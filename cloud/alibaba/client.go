@@ -12,7 +12,7 @@ import (
 	at "github.com/alibabacloud-go/tea/tea"
 )
 
-func Request(rq *ReqeustParam) (any, error) {
+func Request(rq *RequestParam) (any, error) {
 	if ep, err := solveEndpoint(rq); ep != "" {
 		rq.Endpoint = ep
 	} else {
@@ -28,7 +28,7 @@ func Request(rq *ReqeustParam) (any, error) {
 	return resp["body"], nil
 }
 
-func newClient(rq *ReqeustParam) (map[string]any, error) {
+func newClient(rq *RequestParam) (map[string]any, error) {
 	config := &ac.Config{
 		AccessKeyId:     &rq.SecretId,
 		AccessKeySecret: &rq.SecretKey,

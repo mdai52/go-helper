@@ -7,7 +7,7 @@ import (
 	"github.com/rehiy/libgo/request"
 )
 
-func Request(rq *ReqeustParam) (any, error) {
+func Request(rq *RequestParam) (any, error) {
 	client := request.Client{
 		Method: rq.Method,
 		Url:    endpoint + rq.Path,

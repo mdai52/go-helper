@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 )
 
-type ReqeustParam struct {
-	Token   string `note:"Api Token"`
-	Method  string `binding:"required"`
-	Path    string `binding:"required"`
-	Query   string `note:"请求参数"`
-	Payload json.RawMessage
+type RequestParam struct {
+	Token   string          `note:"Api Token" json:"token"`
+	Method  string          `binding:"required" json:"method"`
+	Path    string          `binding:"required" json:"path"`
+	Query   string          `note:"请求参数" json:"query"`
+	Payload json.RawMessage `json:"payload"`
 }
 
 type ResponseData struct {

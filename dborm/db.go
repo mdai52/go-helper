@@ -8,16 +8,16 @@ import (
 	"github.com/rehiy/libgo/logman"
 )
 
-var Db *gorm.DB
+var DB *gorm.DB
 var RawLogger *logman.Logger
 
 type Config struct {
-	Type     string `note:"数据库类型"`
-	Host     string `note:"主机地址"`
-	User     string `note:"用户名"`
-	Password string `note:"用户密码"`
-	DbName   string `note:"数据库名称"`
-	Option   string `note:"数据库选项"`
+	Type     string `note:"数据库类型" json:"type"`
+	Host     string `note:"主机地址" json:"host"`
+	User     string `note:"用户名" json:"user"`
+	Password string `note:"用户密码" json:"password"`
+	DbName   string `note:"数据库名称" json:"dbName"`
+	Option   string `note:"数据库选项" json:"option"`
 }
 
 func Connect(args *Config) *gorm.DB {
@@ -36,14 +36,14 @@ func Connect(args *Config) *gorm.DB {
 	if db, err := gorm.Open(dialector(args), config); err != nil {
 		logman.Fatal("connect to databse failed", "error", err)
 	} else {
-		Db = db
+		DB = db
 	}
 
-	return Db
+	return DB
 }
 
 func Destroy() error {
-	if db, err := Db.DB(); db != nil {
+	if db, err := DB.DB(); db != nil {
 		return db.Close()
 	} else {
 		return err

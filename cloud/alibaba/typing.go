@@ -1,15 +1,15 @@
 package alibaba
 
-type ReqeustParam struct {
-	Service   string `note:"产品名称"`
-	Version   string `note:"接口版本"`
-	Action    string `note:"接口名称"`
-	Query     any    `note:"结构化数据"`
-	Payload   any    `note:"结构化数据"`
-	RegionId  string `note:"资源所在区域"`
-	Endpoint  string `note:"指定接口域名"`
-	SecretId  string `note:"访问密钥 Id"`
-	SecretKey string `note:"访问密钥 Key"`
+type RequestParam struct {
+	Service   string `note:"产品名称" json:"service"`
+	Version   string `note:"接口版本" json:"version"`
+	Action    string `note:"接口名称" json:"action"`
+	Query     any    `note:"结构化数据" json:"query"`
+	Payload   any    `note:"结构化数据" json:"payload"`
+	RegionId  string `note:"资源所在区域" json:"regionId"`
+	Endpoint  string `note:"指定接口域名" json:"endpoint"`
+	SecretId  string `note:"访问密钥 Id" json:"secretId"`
+	SecretKey string `note:"访问密钥 Key" json:"secretKey"`
 }
 
 type ResponseData struct {

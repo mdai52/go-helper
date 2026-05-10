@@ -6,14 +6,15 @@ import (
 	"strings"
 )
 
+// ExecPayload 命令执行参数
 type ExecPayload struct {
-	Name          string `note:"脚本名称"`
-	CommandType   string `note:"脚本类型 BAT|POWERSHELL|SHELL"`
-	Gb18030ToUtf8 bool   `note:"是否转换输出文本编码"`
-	Username      string `note:"执行脚本的用户名"`
-	WorkDirectory string `note:"脚本工作目录"`
-	Content       string `note:"脚本内容"`
-	Timeout       uint   `note:"超时时间"`
+	Name          string `json:"name" note:"脚本名称"`
+	CommandType   string `json:"commandType" note:"脚本类型 BAT|POWERSHELL|SHELL|EXEC"`
+	Gb18030ToUtf8 bool   `json:"gb18030ToUtf8" note:"是否转换输出文本编码"`
+	Username      string `json:"username" note:"执行脚本的用户名"`
+	WorkDirectory string `json:"workDirectory" note:"脚本工作目录"`
+	Content       string `json:"content" note:"脚本内容"`
+	Timeout       uint   `json:"timeout" note:"超时时间（秒）"`
 }
 
 func Exec(data *ExecPayload) (string, error) {

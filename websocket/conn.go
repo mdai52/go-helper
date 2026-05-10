@@ -1,6 +1,9 @@
 package websocket
 
 import (
+	"errors"
+	"io"
+
 	"golang.org/x/net/websocket"
 
 	"github.com/rehiy/libgo/logman"
@@ -31,15 +34,19 @@ func (c *Conn) WriteJson(v any) error {
 	return websocket.JSON.Send(c.Conn, v)
 }
 
-// Close 关闭连接
+// Close 关闭连接，忽略已关闭的错误
 func (c *Conn) Close() error {
-	return c.Conn.Close()
+	err := c.Conn.Close()
+	if err != nil && !errors.Is(err, io.EOF) {
+		return err
+	}
+	return nil
 }
 
 // Die 发送消息并关闭连接
-func (c *Conn) Die(r string) {
-	c.Write([]byte(r))
-	c.Conn.Close()
+func (c *Conn) Die(msg string) {
+	_, _ = c.Conn.Write([]byte(msg))
+	_ = c.Conn.Close()
 }
 
 // NewClient 创建 WebSocket 客户端连接

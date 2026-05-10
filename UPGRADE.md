@@ -233,6 +233,44 @@ go test ./...
 | `socket.WsConn` | `websocket.Conn` | websocket |
 | `socket.PlainData` | `websocket.Message` | websocket |
 | `socket.TcpRelayParam` | `tcprelay.Param` | tcprelay |
+| `alibaba.ReqeustParam` | `alibaba.RequestParam` | cloud/alibaba |
+| `tencent.ReqeustParam` | `tencent.RequestParam` | cloud/tencent |
+| `cloudflare.ReqeustParam` | `cloudflare.RequestParam` | cloud/cloudflare |
+| `certmagic.ReqeustParam` | `certmagic.RequestParam` | certmagic |
+
+---
+
+## 字段重命名
+
+以下结构体字段名称已规范化（遵循 Go 缩写命名规范）：
+
+| 所在包 | 结构体 | 旧字段名 | 新字段名 |
+|--------|--------|----------|----------|
+| certman | Manager | DirectoryUrl | DirectoryURL |
+| psutil | SummaryStat | PublicIpv4 | PublicIPv4 |
+| psutil | SummaryStat | PublicIpv6 | PublicIPv6 |
+| dborm | - | Db | DB |
+
+---
+
+## JSON 标签添加
+
+以下结构体已添加 JSON 标签，确保序列化时字段名一致：
+
+| 所在包 | 结构体 |
+|--------|--------|
+| websocket | Message |
+| tcprelay | Param |
+| certmagic | RequestParam, Certificate |
+| cloud/alibaba | RequestParam |
+| cloud/tencent | RequestParam |
+| cloud/cloudflare | RequestParam |
+| webssh | SSHClientOption |
+| filer | FileInfo |
+| psutil | GoMemoryStat, SummaryStat, DetailStat, DiskPartition, NetInterface |
+| gpu | DeviceStat |
+| dborm | Config |
+| logman | Config |
 
 ---
 
@@ -242,6 +280,34 @@ go test ./...
 - **logman 包**：保持不变，仅内部依赖调整
 - **httpd 包**：新增 `Recovery()` 中间件，其他 API 不变
 - **其他包**：API 保持兼容，仅路径调整
+
+---
+
+## 性能优化
+
+### 并发安全改进
+
+| 所在包 | 改进内容 |
+|--------|----------|
+| certmagic | `magicPool` 添加 `sync.RWMutex` 保护 |
+| psutil | `publicIPv4/publicIPv6` 添加 `sync.RWMutex` 保护 |
+| ttlcache | `Get()` 方法优化为读锁优先，减少锁竞争 |
+
+### 内存优化
+
+| 所在包 | 改进内容 |
+|--------|----------|
+| psutil | `InterfaceAddrs()` 预分配切片容量 |
+
+### 逻辑优化
+
+| 所在包 | 改进内容 |
+|--------|----------|
+| certman | `GetCertificate()` 异步保存证书到缓存 |
+| certman | `fulfill()` 支持上下文取消，避免资源泄漏 |
+| httpd | `Recovery()` 添加请求方法和堆栈信息 |
+| websocket | `Close()` 忽略已关闭错误 |
+| logman | `replaceAttr` 提取为包级函数，减少闭包开销 |
 
 ---
 

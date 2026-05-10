@@ -14,10 +14,10 @@ import (
 var config = &Config{}
 
 type Config struct {
-	Level    string `note:"日志级别 debug|info|warn|error"`
-	Target   string `note:"日志输出设备 both|file|null|stdout|stderr"`
-	Storage  string `note:"日志文件存储目录"`
-	Filename string `note:"默认日志文件名"`
+	Level    string `note:"日志级别 debug|info|warn|error" json:"level"`
+	Target   string `note:"日志输出设备 both|file|null|stdout|stderr" json:"target"`
+	Storage  string `note:"日志文件存储目录" json:"storage"`
+	Filename string `note:"默认日志文件名" json:"filename"`
 }
 
 func Default() *slog.Logger {
@@ -32,6 +32,18 @@ func SetDefault(args *Config) {
 	slog.SetDefault(NewLogger(args.Filename))
 }
 
+// replaceAttr 日志属性替换函数
+func replaceAttr(a slog.Attr) slog.Attr {
+	switch a.Key {
+	case slog.TimeKey:
+		a.Value = slog.StringValue(time.Now().Format("2006-01-02 15:04:05"))
+	case "Logger":
+		// 清理 Logger 字段值开头的 . 和 /
+		a.Value = slog.StringValue(strings.TrimLeft(a.Value.String(), "./"))
+	}
+	return a
+}
+
 func NewLogger(name string) *slog.Logger {
 	var level slog.Level
 	level.UnmarshalText([]byte(config.Level))
@@ -39,14 +51,7 @@ func NewLogger(name string) *slog.Logger {
 	option := &slog.HandlerOptions{
 		Level: level,
 		ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
-			if a.Key == slog.TimeKey {
-				a.Value = slog.StringValue(time.Now().Format("2006-01-02 15:04:05"))
-			}
-			// 清理 Logger 字段值开头的 . 和 /
-			if a.Key == "Logger" {
-				a.Value = slog.StringValue(strings.TrimLeft(a.Value.String(), "./"))
-			}
-			return a
+			return replaceAttr(a)
 		},
 	}
 
@@ -80,10 +85,10 @@ func FileWriter(name string) *lumberjack.Logger {
 	}
 
 	return &lumberjack.Logger{
-		Compress:   true, // 是否压缩/归档旧文件
-		Filename:   f,    // 日志文件位置
-		MaxSize:    100,  // 单个日志文件最大值(单位：MB)
-		MaxBackups: 21,   // 保留旧文件的最大个数
-		MaxAge:     7,    // 保留旧文件的最大天数
+		Compress:   true,
+		Filename:   f,
+		MaxSize:    100,
+		MaxBackups: 21,
+		MaxAge:     7,
 	}
 }

@@ -14,7 +14,7 @@ import (
 	tp "github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common/profile"
 )
 
-func Request(rq *ReqeustParam) (any, error) {
+func Request(rq *RequestParam) (any, error) {
 	resp, err := newClient(rq)
 
 	if err != nil {
@@ -31,7 +31,7 @@ func Request(rq *ReqeustParam) (any, error) {
 	return res.Response, nil
 }
 
-func newClient(rq *ReqeustParam) (*th.CommonResponse, error) {
+func newClient(rq *RequestParam) (*th.CommonResponse, error) {
 	cpf := tp.NewClientProfile()
 
 	// 调试开关

@@ -6,15 +6,15 @@ import (
 )
 
 type FileInfo struct {
-	Name    string      // 文件名
-	Size    int64       // 字节大小
-	Mode    os.FileMode // 权限，如 0777
-	ModTime int64       // 修改时间，Unix时间戳
-	Symlink string      // 链接的真实路径，软链接时有效
-	Owner   string      // 所属用户
-	Group   string      // 所属组
-	IsDir   bool        // 是否是目录
-	Data    []byte      // 文件数据
+	Name    string      `note:"文件名" json:"name"`
+	Size    int64       `note:"字节大小" json:"size"`
+	Mode    os.FileMode `note:"权限，如 0777" json:"mode"`
+	ModTime int64       `note:"修改时间，Unix时间戳" json:"modTime"`
+	Symlink string      `note:"链接的真实路径，软链接时有效" json:"symlink"`
+	Owner   string      `note:"所属用户" json:"owner"`
+	Group   string      `note:"所属组" json:"group"`
+	IsDir   bool        `note:"是否是目录" json:"isDir"`
+	Data    []byte      `note:"文件数据" json:"data,omitempty"`
 }
 
 // 列出目录中的所有文件

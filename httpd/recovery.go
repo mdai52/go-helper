@@ -1,9 +1,10 @@
 package httpd
 
 import (
-	"fmt"
+	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
+	"github.com/rehiy/libgo/logman"
 )
 
 // Recovery Gin panic 恢复中间件
@@ -11,7 +12,12 @@ func Recovery() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		defer func() {
 			if err := recover(); err != nil {
-				fmt.Println("[Recovery] panic:", err)
+				logman.Error("panic recovered",
+					"error", err,
+					"path", c.Request.URL.Path,
+					"method", c.Request.Method,
+					"stack", string(debug.Stack()),
+				)
 				c.AbortWithStatus(500)
 			}
 		}()

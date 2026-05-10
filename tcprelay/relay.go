@@ -9,8 +9,8 @@ import (
 
 // Param TCP 转发参数
 type Param struct {
-	TargetAddr string `note:"目标地址"`
-	BinaryMode bool   `note:"二进制模式"`
+	TargetAddr string `json:"targetAddr" note:"目标地址"`
+	BinaryMode bool   `json:"binaryMode" note:"二进制模式"`
 }
 
 // Relay WebSocket 到 TCP 的数据转发

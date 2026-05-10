@@ -26,7 +26,7 @@ import (
 
 type Manager struct {
 	Email                  string
-	DirectoryUrl           string
+	DirectoryURL           string
 	ExternalAccountBinding *acme.ExternalAccountBinding
 
 	Cache  Cache
@@ -49,7 +49,7 @@ func (m *Manager) GetCertificate(name string) (*tls.Certificate, error) {
 		return nil, errors.New("missing domain name")
 	}
 
-	name, err := idna.Lookup.ToASCII(name)
+	asciiName, err := idna.Lookup.ToASCII(name)
 	if err != nil {
 		return nil, errors.New("domain name contains invalid character")
 	}
@@ -57,11 +57,9 @@ func (m *Manager) GetCertificate(name string) (*tls.Certificate, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
-	ck := certKey{
-		domain: name,
-	}
+	ck := certKey{domain: asciiName}
 
-	// read cache
+	// 尝试从内存缓存加载
 	cert, err := m.loadCert(ctx, ck)
 	if err == nil {
 		return cert, nil
@@ -70,13 +68,15 @@ func (m *Manager) GetCertificate(name string) (*tls.Certificate, error) {
 		return nil, err
 	}
 
-	// first time
+	// 首次申请证书
 	cert, err = m.createCert(ctx, ck)
 	if err != nil {
 		return nil, err
 	}
 
-	m.pemSave(ctx, ck, cert)
+	// 异步保存到缓存
+	go m.pemSave(context.Background(), ck, cert)
+
 	return cert, nil
 }
 
@@ -299,11 +299,17 @@ func (m *Manager) fulfill(ctx context.Context, chal *acme.Challenge, domain stri
 		return nil, err
 	}
 
-	m.Logger.Info("wait 30 seconds for dns to take effect")
-	time.Sleep(30 * time.Second)
+	// 等待 DNS 生效
+	select {
+	case <-time.After(30 * time.Second):
+	case <-ctx.Done():
+		// 上下文取消时清理 DNS 记录
+		go m.DnsProvider.DeleteRecords(context.Background(), domain, record)
+		return nil, ctx.Err()
+	}
 
 	return func() {
-		go m.DnsProvider.DeleteRecords(ctx, domain, record)
+		go m.DnsProvider.DeleteRecords(context.Background(), domain, record)
 	}, nil
 }
 
@@ -359,7 +365,7 @@ func (m *Manager) acmeClient(ctx context.Context) (*acme.Client, error) {
 	}
 
 	client := &acme.Client{
-		DirectoryURL: m.DirectoryUrl,
+		DirectoryURL: m.DirectoryURL,
 		UserAgent:    "autocert",
 		Key:          accountKey,
 	}

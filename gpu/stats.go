@@ -14,15 +14,15 @@ import (
 // Vendor 使用统一的小写厂商名：nvidia | amd | intel
 // 该结构只承载采集结果，不包含展示序号等业务字段
 type DeviceStat struct {
-	Address     string
-	Name        string
-	Vendor      string
-	MemoryUsed  uint64
-	MemoryTotal uint64
-	Utilization float64
-	Temperature int
-	PowerUsage  float64
-	FanSpeed    int
+	Address     string  `json:"address"`
+	Name        string  `json:"name"`
+	Vendor      string  `json:"vendor"`
+	MemoryUsed  uint64  `json:"memoryUsed"`
+	MemoryTotal uint64  `json:"memoryTotal"`
+	Utilization float64 `json:"utilization"`
+	Temperature int     `json:"temperature"`
+	PowerUsage  float64 `json:"powerUsage"`
+	FanSpeed    int     `json:"fanSpeed"`
 }
 
 // GetGPUStats 采集所有 GPU 原始统计信息（ghw 发现 → 按厂商分发采集）
