@@ -114,7 +114,6 @@ func validCertificate(ck certKey, der [][]byte, key crypto.Signer, now time.Time
 		if pub.N.Cmp(prv.N) != 0 {
 			return nil, errors.New("private key does not match public key")
 		}
-		return nil, errors.New("key type does not match expected value")
 	case *ecdsa.PublicKey:
 		prv, ok := key.(*ecdsa.PrivateKey)
 		if !ok {
