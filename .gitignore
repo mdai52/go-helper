@@ -1,2 +1,4 @@
 test*/
+*test/
 *_test.go
+test_*.go

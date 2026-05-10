@@ -44,7 +44,7 @@ go get -u github.com/rehiy/libgo
 |------|------|
 | `secure` | 加密解密工具，支持 DES3、MD5、SSH 密钥生成 |
 | `certmagic` | SSL 证书自动化管理（基于 Certmagic） |
-| `certman` | 证书管理与缓存 |
+| `certify` | 证书管理（支持 DNS-01/HTTP-01 验证） |
 
 ### 🌐 网络与通信
 

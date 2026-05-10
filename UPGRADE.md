@@ -246,7 +246,7 @@ go test ./...
 
 | 所在包 | 结构体 | 旧字段名 | 新字段名 |
 |--------|--------|----------|----------|
-| certman | Manager | DirectoryUrl | DirectoryURL |
+| certify | Manager | DirectoryUrl | DirectoryURL |
 | psutil | SummaryStat | PublicIpv4 | PublicIPv4 |
 | psutil | SummaryStat | PublicIpv6 | PublicIPv6 |
 | dborm | - | Db | DB |
@@ -303,8 +303,11 @@ go test ./...
 
 | 所在包 | 改进内容 |
 |--------|----------|
-| certman | `GetCertificate()` 异步保存证书到缓存 |
-| certman | `fulfill()` 支持上下文取消，避免资源泄漏 |
+| certify | 包重命名：`certman` → `certify` |
+| certify | 新增 HTTP-01 验证支持 |
+| certify | 新增 `ChallengeType` 配置项（`ChallengeDNS01`/`ChallengeHTTP01`） |
+| certify | `GetCertificate()` 异步保存证书到缓存 |
+| certify | `fulfill()` 支持上下文取消，避免资源泄漏 |
 | httpd | `Recovery()` 添加请求方法和堆栈信息 |
 | websocket | `Close()` 忽略已关闭错误 |
 | logman | `replaceAttr` 提取为包级函数，减少闭包开销 |
