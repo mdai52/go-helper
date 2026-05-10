@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 // Rand 生成随机字符串
@@ -23,4 +25,13 @@ func Rand(length uint) string {
 	}
 
 	return strings.Join(rs, "")
+}
+
+// NewString 生成基于 UUID v7 的唯一字符串
+func NewString() string {
+	tid, err := uuid.NewV7()
+	if err != nil {
+		return uuid.NewString()
+	}
+	return tid.String()
 }
