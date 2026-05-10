@@ -5,7 +5,7 @@ import "encoding/json"
 // Message WebSocket 消息结构
 type Message struct {
 	Method  string `json:"method"`
-	TaskId  uint   `json:"taskId"`
+	TaskID  uint   `json:"taskId"`
 	Success bool   `json:"success"`
 	Message string `json:"message"`
 	Payload any    `json:"payload"`

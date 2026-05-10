@@ -1,6 +1,7 @@
 package httpd
 
 import (
+	"net/http"
 	"runtime/debug"
 
 	"github.com/gin-gonic/gin"
@@ -18,7 +19,7 @@ func Recovery() gin.HandlerFunc {
 					"method", c.Request.Method,
 					"stack", string(debug.Stack()),
 				)
-				c.AbortWithStatus(500)
+				c.AbortWithStatus(http.StatusInternalServerError)
 			}
 		}()
 		c.Next()

@@ -2,7 +2,7 @@ package command
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -16,9 +16,8 @@ import (
 
 func newScript(code string, ext string) (string, error) {
 	tf, err := os.CreateTemp("", "tmp-*"+ext)
-
 	if err != nil {
-		return "", errors.New("创建临时文件失败")
+		return "", fmt.Errorf("create temp file: %w", err)
 	}
 
 	defer tf.Close()
@@ -35,7 +34,7 @@ func newScript(code string, ext string) (string, error) {
 
 	// 写入临时文件
 	if _, err = tf.WriteString(code); err != nil {
-		return "", errors.New("写入临时文件失败")
+		return "", fmt.Errorf("write temp file: %w", err)
 	}
 
 	// 赋予执行权限

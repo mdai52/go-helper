@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// OrderSafe 校验排序字段是否安全
 func OrderSafe(data string) error {
 	var expr = regexp.MustCompile(`^(\w+)( DESC)?$`)
 

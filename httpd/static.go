@@ -9,16 +9,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// Static 静态文件服务
 func Static(root, prefix string) {
 	hfs := gin.Dir(root, false)
 	engine.NoRoute(StaticServe(hfs, prefix))
 }
 
+// StaticIndex 静态文件服务（带目录列表）
 func StaticIndex(root, prefix string) {
 	hfs := gin.Dir(root, true)
 	engine.NoRoute(StaticServe(hfs, prefix))
 }
 
+// StaticEmbed 嵌入式静态文件服务
 func StaticEmbed(efs embed.FS, prefix, subdir string) {
 	var hfs http.FileSystem
 
@@ -32,6 +35,7 @@ func StaticEmbed(efs embed.FS, prefix, subdir string) {
 	engine.NoRoute(StaticServe(hfs, prefix))
 }
 
+// StaticServe 静态文件服务处理器
 func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
 	fileHandler := http.FileServer(hfs)
 	if prefix != "" {

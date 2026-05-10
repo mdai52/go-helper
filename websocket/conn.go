@@ -19,8 +19,8 @@ func (c *Conn) Read(v []byte) error {
 	return websocket.Message.Receive(c.Conn, v)
 }
 
-// ReadJson 读取 JSON 消息
-func (c *Conn) ReadJson(v any) error {
+// ReadJSON 读取 JSON 消息
+func (c *Conn) ReadJSON(v any) error {
 	return websocket.JSON.Receive(c.Conn, v)
 }
 
@@ -29,8 +29,8 @@ func (c *Conn) Write(p []byte) error {
 	return websocket.Message.Send(c.Conn, p)
 }
 
-// WriteJson 写入 JSON 消息
-func (c *Conn) WriteJson(v any) error {
+// WriteJSON 写入 JSON 消息
+func (c *Conn) WriteJSON(v any) error {
 	return websocket.JSON.Send(c.Conn, v)
 }
 

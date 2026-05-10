@@ -6,8 +6,7 @@ import (
 	"strings"
 )
 
-// 随机字符串
-
+// Rand 生成随机字符串
 func Rand(length uint) string {
 	rs := make([]string, length)
 

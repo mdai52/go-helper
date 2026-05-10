@@ -15,6 +15,7 @@ var (
 	publicAddrMu sync.RWMutex
 )
 
+// PublicAddress 获取公网 IP 地址
 func PublicAddress(force bool) (string, string) {
 	publicAddrMu.RLock()
 	v4, v6 := publicIPv4, publicIPv6
@@ -41,6 +42,7 @@ func PublicAddress(force bool) (string, string) {
 	return publicIPv4, publicIPv6
 }
 
+// InterfaceAddrs 获取网卡 IP 地址列表
 func InterfaceAddrs(name string) ([]string, []string) {
 	var addrs []net.Addr
 

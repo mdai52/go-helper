@@ -4,6 +4,7 @@ import (
 	"runtime"
 )
 
+// GoMemory 获取 Go 内存统计信息
 func GoMemory() *GoMemoryStat {
 	mstat := &runtime.MemStats{}
 	runtime.ReadMemStats(mstat)

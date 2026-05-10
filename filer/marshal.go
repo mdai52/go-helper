@@ -13,11 +13,7 @@ func SaveJson(file string, data any) error {
 	if err != nil {
 		return err
 	}
-	// 写入文件
-	if err := Write(file, buf); err != nil {
-		return err
-	}
-	return nil
+	return Write(file, buf)
 }
 
 func ReadJson(file string, data any) error {
@@ -25,11 +21,7 @@ func ReadJson(file string, data any) error {
 	if err != nil {
 		return err
 	}
-	// 解析 JSON 数据
-	if err := json.Unmarshal(bytes, data); err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(bytes, data)
 }
 
 func ReadJsonT[T any](file string) (T, error) {
@@ -38,11 +30,8 @@ func ReadJsonT[T any](file string) (T, error) {
 	if err != nil {
 		return result, err
 	}
-	// 解析 JSON 数据
-	if err := json.Unmarshal(bytes, &result); err != nil {
-		return result, err
-	}
-	return result, nil
+	err = json.Unmarshal(bytes, &result)
+	return result, err
 }
 
 // YAML 格式保存数据
@@ -52,11 +41,7 @@ func SaveYaml(file string, data any) error {
 	if err != nil {
 		return err
 	}
-	// 写入文件
-	if err := Write(file, buf); err != nil {
-		return err
-	}
-	return nil
+	return Write(file, buf)
 }
 
 func ReadYaml(file string, data any) error {
@@ -64,11 +49,7 @@ func ReadYaml(file string, data any) error {
 	if err != nil {
 		return err
 	}
-	// 解析 YAML 数据
-	if err := yaml.Unmarshal(bytes, data); err != nil {
-		return err
-	}
-	return nil
+	return yaml.Unmarshal(bytes, data)
 }
 
 func ReadYamlT[T any](file string) (T, error) {
@@ -77,9 +58,6 @@ func ReadYamlT[T any](file string) (T, error) {
 	if err != nil {
 		return result, err
 	}
-	// 解析 YAML 数据
-	if err := yaml.Unmarshal(bytes, &result); err != nil {
-		return result, err
-	}
-	return result, nil
+	err = yaml.Unmarshal(bytes, &result)
+	return result, err
 }

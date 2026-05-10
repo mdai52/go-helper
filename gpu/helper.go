@@ -24,7 +24,7 @@ var virtualVendorIDs = map[string]bool{
 }
 
 // 核显产品名关键词（匹配到即视为核显）
-var iGPUKeywords = []string{
+var IGPUKeywords = []string{
 	"HD Graphics", "UHD Graphics", "Iris Graphics", "Iris Plus",
 	"Iris Pro", "Iris Xe", "GMA",
 }

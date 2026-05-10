@@ -93,7 +93,7 @@ func isIntegratedGPU(card *ghwgpu.GraphicsCard) bool {
 	if strings.Contains(name, "Arc") {
 		return false
 	}
-	for _, kw := range iGPUKeywords {
+	for _, kw := range IGPUKeywords {
 		if strings.Contains(name, kw) {
 			return true
 		}

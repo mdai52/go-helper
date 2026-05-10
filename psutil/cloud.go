@@ -6,9 +6,8 @@ import (
 	"github.com/rehiy/libgo/request"
 )
 
-// 云实例 Id
-
-func CloudInstanceId() string {
+// CloudInstanceID 云实例 ID
+func CloudInstanceID() string {
 	var url string
 	var mid string
 

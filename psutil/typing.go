@@ -29,8 +29,8 @@ type SummaryStat struct {
 	OS           string    `note:"操作系统" json:"os"`
 	Platform     string    `note:"平台" json:"platform"`
 	KernelArch   string    `note:"内核架构" json:"kernelArch"`
-	CpuCore      int       `note:"CPU 核心数" json:"cpuCore"`
-	CpuCoreLogic int       `note:"CPU 逻辑核心数" json:"cpuCoreLogic"`
+	CPUCore      int       `note:"CPU 核心数" json:"cpuCore"`
+	CPUCoreLogic int       `note:"CPU 逻辑核心数" json:"cpuCoreLogic"`
 	CpuPercent   []float64 `note:"CPU 使用率" json:"cpuPercent"`
 	MemoryTotal  uint64    `note:"内存总量" json:"memoryTotal"`
 	MemoryUsed   uint64    `note:"内存使用量" json:"memoryUsed"`

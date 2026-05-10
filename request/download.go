@@ -21,7 +21,7 @@ func Download(url, target string, isGzip bool) (string, error) {
 
 	// 显示下载进度
 	bar := pb.StartNew(int(resp.ContentLength))
-	bar.Set(pb.Bytes, true) //自动换为合适的单位
+	bar.Set(pb.Bytes, true) // 自动换为合适的单位
 	reader = bar.NewProxyReader(reader)
 	defer reader.Close()
 	defer bar.Finish()

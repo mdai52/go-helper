@@ -1,7 +1,7 @@
 package command
 
 import (
-	"errors"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -49,7 +49,7 @@ func Exec(data *ExecPayload) (string, error) {
 		bin, arg = arg[0], arg[1:]
 		tmp = "-"
 	default:
-		err = errors.New("不支持此类脚本")
+		err = fmt.Errorf("unsupported script type: %s", data.CommandType)
 	}
 
 	if err != nil || tmp == "" {

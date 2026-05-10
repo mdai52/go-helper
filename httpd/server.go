@@ -69,6 +69,6 @@ func Server(addr string, options ...Option) {
 
 	logman.Info("httpd start", "address", addr)
 	if err := server.ListenAndServe(); err != nil {
-		logman.Warn(err.Error())
+		logman.Warn("httpd server closed", "error", err)
 	}
 }
