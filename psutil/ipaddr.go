@@ -4,7 +4,7 @@ import (
 	"net"
 	"strings"
 
-	"github.com/rehiy/pango/request"
+	"github.com/rehiy/libgo/request"
 )
 
 // 公网 IP

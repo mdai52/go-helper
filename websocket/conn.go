@@ -1,0 +1,56 @@
+package websocket
+
+import (
+	"golang.org/x/net/websocket"
+
+	"github.com/rehiy/libgo/logman"
+)
+
+// Conn WebSocket 连接封装
+type Conn struct {
+	*websocket.Conn
+}
+
+// Read 读取消息
+func (c *Conn) Read(v []byte) error {
+	return websocket.Message.Receive(c.Conn, v)
+}
+
+// ReadJson 读取 JSON 消息
+func (c *Conn) ReadJson(v any) error {
+	return websocket.JSON.Receive(c.Conn, v)
+}
+
+// Write 写入消息
+func (c *Conn) Write(p []byte) error {
+	return websocket.Message.Send(c.Conn, p)
+}
+
+// WriteJson 写入 JSON 消息
+func (c *Conn) WriteJson(v any) error {
+	return websocket.JSON.Send(c.Conn, v)
+}
+
+// Close 关闭连接
+func (c *Conn) Close() error {
+	return c.Conn.Close()
+}
+
+// Die 发送消息并关闭连接
+func (c *Conn) Die(r string) {
+	c.Write([]byte(r))
+	c.Conn.Close()
+}
+
+// NewClient 创建 WebSocket 客户端连接
+func NewClient(url, protocol, origin string) (*Conn, error) {
+	logman.Info("connect to server", "url", url)
+
+	ws, err := websocket.Dial(url, protocol, origin)
+	if err != nil {
+		logman.Error("connect failed", "error", err)
+		return nil, err
+	}
+
+	return &Conn{ws}, nil
+}

@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/rehiy/pango/logman"
-	"github.com/rehiy/pango/onquit"
+	"github.com/rehiy/libgo/logman"
+	"github.com/rehiy/libgo/signal"
 )
 
 type Config struct {
@@ -54,7 +54,7 @@ func Server(addr string, options ...Option) {
 		WriteTimeout: cfg.WriteTimeout,
 	}
 
-	onquit.Register(func() {
+	signal.OnQuit(func() {
 		// 创建一个剩余15秒超时的上下文
 		logman.Warn("httpd will close within 9 seconds")
 		ctx, cancel := context.WithTimeout(context.Background(), 9*time.Second)

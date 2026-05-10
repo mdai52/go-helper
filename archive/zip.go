@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rehiy/pango/filer"
+	"github.com/rehiy/libgo/filer"
 )
 
 // Zipper 归档服务

@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/rehiy/pango/onquit"
+	"github.com/rehiy/libgo/signal"
 )
 
 var (
@@ -32,7 +32,7 @@ func Errorf(msg string, args ...any) {
 }
 
 func Fatal(msg string, args ...any) {
-	onquit.CallQuitFuncs()
+	signal.CallQuitFuncs()
 	Error(msg, args...)
 	os.Exit(1)
 }

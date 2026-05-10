@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/rehiy/pango/request"
+	"github.com/rehiy/libgo/request"
 )
 
 func Request(rq *ReqeustParam) (any, error) {

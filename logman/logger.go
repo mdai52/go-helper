@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/rehiy/pango/onquit"
+	"github.com/rehiy/libgo/signal"
 )
 
 type Logger struct {
@@ -82,13 +82,13 @@ func (l *Logger) Errorf(msg string, args ...any) {
 // Fatal logs a fatal message
 
 func (l *Logger) Fatal(msg string, args ...any) {
-	onquit.CallQuitFuncs() // 调用所有退出函数
+	signal.CallQuitFuncs() // 调用所有退出函数
 	l.log(slog.LevelError, msg, args...)
 	os.Exit(1)
 }
 
 func (l *Logger) Fatalf(msg string, args ...any) {
-	onquit.CallQuitFuncs() // 调用所有退出函数
+	signal.CallQuitFuncs() // 调用所有退出函数
 	l.log(slog.LevelError, fmt.Sprintf(msg, args...))
 	os.Exit(1)
 }
