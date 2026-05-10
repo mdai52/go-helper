@@ -205,6 +205,7 @@ grep -r "github.com/rehiy/libgo/socket" . --include="*.go"
 ```
 
 根据实际使用情况更新：
+
 - 使用 `WsConn`、`NewWsClient`、`PlainData` → 改为 `websocket` 包
 - 使用 `TcpRelay`、`TcpRelayParam` → 改为 `tcprelay` 包
 
@@ -236,7 +237,6 @@ go test ./...
 | `alibaba.ReqeustParam` | `alibaba.RequestParam` | cloud/alibaba |
 | `tencent.ReqeustParam` | `tencent.RequestParam` | cloud/tencent |
 | `cloudflare.ReqeustParam` | `cloudflare.RequestParam` | cloud/cloudflare |
-| `certmagic.ReqeustParam` | `certmagic.RequestParam` | certmagic |
 
 ---
 
@@ -261,7 +261,7 @@ go test ./...
 |--------|--------|
 | websocket | Message |
 | tcprelay | Param |
-| certmagic | RequestParam, Certificate |
+
 | cloud/alibaba | RequestParam |
 | cloud/tencent | RequestParam |
 | cloud/cloudflare | RequestParam |
@@ -280,37 +280,6 @@ go test ./...
 - **logman 包**：保持不变，仅内部依赖调整
 - **httpd 包**：新增 `Recovery()` 中间件，其他 API 不变
 - **其他包**：API 保持兼容，仅路径调整
-
----
-
-## 性能优化
-
-### 并发安全改进
-
-| 所在包 | 改进内容 |
-|--------|----------|
-| certmagic | `magicPool` 添加 `sync.RWMutex` 保护 |
-| psutil | `publicIPv4/publicIPv6` 添加 `sync.RWMutex` 保护 |
-| ttlcache | `Get()` 方法优化为读锁优先，减少锁竞争 |
-
-### 内存优化
-
-| 所在包 | 改进内容 |
-|--------|----------|
-| psutil | `InterfaceAddrs()` 预分配切片容量 |
-
-### 逻辑优化
-
-| 所在包 | 改进内容 |
-|--------|----------|
-| certify | 包重命名：`certman` → `certify` |
-| certify | 新增 HTTP-01 验证支持 |
-| certify | 新增 `ChallengeType` 配置项（`ChallengeDNS01`/`ChallengeHTTP01`） |
-| certify | `GetCertificate()` 异步保存证书到缓存 |
-| certify | `fulfill()` 支持上下文取消，避免资源泄漏 |
-| httpd | `Recovery()` 添加请求方法和堆栈信息 |
-| websocket | `Close()` 忽略已关闭错误 |
-| logman | `replaceAttr` 提取为包级函数，减少闭包开销 |
 
 ---
 
