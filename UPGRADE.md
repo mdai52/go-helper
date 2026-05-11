@@ -4,9 +4,124 @@
 
 ## 版本变更
 
-### v0.15.0（当前版本）
+### 当前版本
 
-本次更新重构 `command` 包，优化 API 命名，使其更直观易懂。
+本次更新重构 `websocket` 包，统一使用 `golang.org/x/net/websocket`，移除 `gorilla/websocket` 依赖。
+
+---
+
+## websocket 包重构
+
+### 主要变更
+
+1. **统一 WebSocket 实现**：移除 `gorilla/websocket` 依赖，统一使用 `golang.org/x/net/websocket`
+2. **分离客户端和服务端**：`client.go` 和 `server.go` 分离
+3. **配置结构化**：使用 `ServerConfig` 管理配置
+
+### 类型重命名
+
+| 旧名称 | 新名称 | 说明 |
+|--------|--------|------|
+| `Conn` | `ClientConn` | 客户端连接 |
+| `ServerConn` | `ServerConn` | 服务端连接（不变） |
+
+### API 变更
+
+#### 服务端配置
+
+```go
+// 旧版本 - 全局变量
+websocket.AllowedOrigins = []string{"http://localhost:*"}
+websocket.CheckOrigin(origin)
+websocket.CorsMiddleware()
+
+// 新版本 - 配置结构
+config := &websocket.ServerConfig{
+    AllowedOrigins: []string{"http://localhost:*"},
+}
+config.CheckOrigin(origin)
+config.CorsMiddleware()
+config.Handler(func(conn *websocket.ServerConn) { ... })
+```
+
+#### 服务端连接
+
+```go
+// 旧版本
+conn.Write("message")           // 参数为 string
+msg, err := conn.Read()         // 返回 []byte
+
+// 新版本
+conn.Write([]byte("message"))   // 参数为 []byte
+err := conn.Read(buf)           // 参数为 []byte 缓冲区
+```
+
+#### 客户端连接
+
+```go
+// 旧版本
+conn, err := websocket.NewClient(url, protocol, origin)
+
+// 新版本（不变）
+conn, err := websocket.NewClient(url, protocol, origin)
+```
+
+### 迁移示例
+
+```go
+// 旧版本 - Gin 路由处理
+func (app *App) shellWebSocket(c *gin.Context) {
+    conn, err := websocket.Upgrade(c)
+    if err != nil {
+        return
+    }
+    defer conn.Close()
+    
+    // 处理连接
+    for {
+        msg, err := conn.Read()
+        if err != nil {
+            break
+        }
+        conn.Write("echo: " + string(msg))
+    }
+}
+
+// 新版本 - 使用 Handler 模式
+func (app *App) shellWebSocket(c *gin.Context) {
+    config := &websocket.ServerConfig{
+        AllowedOrigins: []string{"http://localhost:*"},
+    }
+    config.Handler(func(conn *websocket.ServerConn) {
+        defer conn.Close()
+        
+        buf := make([]byte, 1024)
+        for {
+            err := conn.Read(buf)
+            if err != nil {
+                break
+            }
+            conn.Write([]byte("echo: " + string(buf)))
+        }
+    })(c)
+}
+```
+
+### 快速迁移脚本
+
+```bash
+#!/bin/bash
+
+# 替换类型名
+find . -name "*.go" -exec sed -i \
+  -e 's/websocket\.Conn/websocket.ClientConn/g' \
+  {} +
+
+# 验证编译
+go build ./...
+
+echo "迁移完成！"
+```
 
 ---
 
