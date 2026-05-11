@@ -6,92 +6,94 @@
 
 ### v0.15.0（当前版本）
 
-本次更新主要优化命名规范，遵循 Go 缩写全大写的惯例。
+本次更新重构 `command` 包，优化 API 命名，使其更直观易懂。
 
 ---
 
-## 函数重命名
+## command 包重构
 
-以下函数已重命名（遵循 Go 缩写命名规范）：
+### 函数重命名
 
-| 所在包 | 旧函数名 | 新函数名 |
+| 旧函数名 | 新函数名 | 说明 |
+|----------|----------|------|
+| `ResolveShell` | `GetShell` | 获取可用的 shell |
+| `FallbackShell` | `DefaultShell` | 获取默认 shell |
+| `Exec` | `RunScript` | 执行脚本 |
+| `BuildCmd` | `NewCommand` | 创建命令对象 |
+| `Run` | `RunCommand` | 执行命令 |
+
+### 结构体重命名
+
+| 旧名称 | 新名称 |
+|--------|--------|
+| `ExecPayload` | `ScriptPayload` |
+
+### 结构体字段重命名
+
+| 结构体 | 旧字段名 | 新字段名 |
 |--------|----------|----------|
-| secure | `Md5sum` | `MD5sum` |
-| secure | `FileMd5sum` | `FileMD5sum` |
-| psutil | `CloudInstanceId` | `CloudInstanceID` |
-| websocket | `ReadJson` | `ReadJSON` |
-| websocket | `WriteJson` | `WriteJSON` |
+| `ScriptPayload` | `CommandType` | `ScriptType` |
+| `ScriptPayload` | `WorkDirectory` | `WorkDir` |
 
 ### 迁移示例
 
 ```go
 // 旧版本
-hash := secure.Md5sum(data)
-hash, _ := secure.FileMd5sum(path)
-id := psutil.CloudInstanceId()
-conn.ReadJson(&msg)
-conn.WriteJson(msg)
+import "github.com/rehiy/libgo/command"
+
+shell := command.ResolveShell("bash")
+shell := command.FallbackShell()
+
+data := &command.ExecPayload{
+    CommandType:   "SHELL",
+    WorkDirectory: "/home/user",
+    Content:       "echo hello",
+    Timeout:       30,
+}
+output, err := command.Exec(data)
+
+cmd := command.BuildCmd(ctx, "bash", []string{"-c", "ls"}, "/home")
+output, err := command.Run("bash", []string{"-c", "ls"}, "/home", 0, false)
 
 // 新版本
-hash := secure.MD5sum(data)
-hash, _ := secure.FileMD5sum(path)
-id := psutil.CloudInstanceID()
-conn.ReadJSON(&msg)
-conn.WriteJSON(msg)
+import "github.com/rehiy/libgo/command"
+
+shell := command.GetShell("bash")
+shell := command.DefaultShell()
+
+data := &command.ScriptPayload{
+    ScriptType: "SHELL",
+    WorkDir:    "/home/user",
+    Content:    "echo hello",
+    Timeout:    30,
+}
+output, err := command.RunScript(data)
+
+cmd := command.NewCommand(ctx, "bash", []string{"-c", "ls"}, "/home")
+output, err := command.RunCommand("bash", []string{"-c", "ls"}, "/home", 0, false)
 ```
 
----
-
-## 字段重命名
-
-以下结构体字段已重命名：
-
-| 所在包 | 结构体 | 旧字段名 | 新字段名 | JSON 标签 |
-|--------|--------|----------|----------|-----------|
-| psutil | SummaryStat | `CpuCore` | `CPUCore` | `cpuCore` |
-| psutil | SummaryStat | `CpuCoreLogic` | `CPUCoreLogic` | `cpuCoreLogic` |
-| websocket | Message | `TaskId` | `TaskID` | `taskId` |
-
-### 迁移示例
-
-```go
-// Go 代码
-// 旧版本
-core := stat.CpuCore
-logic := stat.CpuCoreLogic
-taskId := msg.TaskId
-
-// 新版本
-core := stat.CPUCore
-logic := stat.CPUCoreLogic
-taskID := msg.TaskID
-
-// 注意：JSON 标签保持不变，序列化/反序列化不受影响
-// 例如：{"cpuCore": 8, "cpuCoreLogic": 16, "taskId": 1}
-```
-
----
-
-## 快速迁移脚本
+### 快速迁移脚本
 
 ```bash
 #!/bin/bash
 
 # 替换函数名
 find . -name "*.go" -exec sed -i \
-  -e 's/secure\.Md5sum/secure.MD5sum/g' \
-  -e 's/secure\.FileMd5sum/secure.FileMD5sum/g' \
-  -e 's/psutil\.CloudInstanceId/psutil.CloudInstanceID/g' \
-  -e 's/\.ReadJson(/.ReadJSON(/g' \
-  -e 's/\.WriteJson(/.WriteJSON(/g' \
+  -e 's/command\.ResolveShell/command.GetShell/g' \
+  -e 's/command\.FallbackShell/command.DefaultShell/g' \
+  -e 's/command\.BuildCmd/command.NewCommand/g' \
+  -e 's/command\.ExecScript/command.RunCommand/g' \
   {} +
 
-# 替换字段名
+# 替换类型名
 find . -name "*.go" -exec sed -i \
-  -e 's/\.CpuCore/.CPUCore/g' \
-  -e 's/\.CpuCoreLogic/.CPUCoreLogic/g' \
-  -e 's/\.TaskId/.TaskID/g' \
+  -e 's/command\.ExecPayload/command.ScriptPayload/g' \
   {} +
+
+# 替换字段名（需手动确认）
+# CommandType -> ScriptType
+# WorkDirectory -> WorkDir
 
 # 验证编译
 go build ./...
@@ -103,11 +105,29 @@ echo "迁移完成！"
 
 ### v0.14.0
 
-本次重构涉及模块重命名、包重组、拆分和重命名，主要变更如下：
+本次更新包括：模块重命名、包重组、命名规范优化。
 
----
+#### 命名规范优化
 
-## 模块名变更
+以下函数已重命名（遵循 Go 缩写命名规范）：
+
+| 所在包 | 旧函数名 | 新函数名 |
+|--------|----------|----------|
+| secure | `Md5sum` | `MD5sum` |
+| secure | `FileMd5sum` | `FileMD5sum` |
+| psutil | `CloudInstanceId` | `CloudInstanceID` |
+| websocket | `ReadJson` | `ReadJSON` |
+| websocket | `WriteJson` | `WriteJSON` |
+
+以下结构体字段已重命名：
+
+| 所在包 | 结构体 | 旧字段名 | 新字段名 | JSON 标签 |
+|--------|--------|----------|----------|-----------|
+| psutil | SummaryStat | `CpuCore` | `CPUCore` | `cpuCore` |
+| psutil | SummaryStat | `CpuCoreLogic` | `CPUCoreLogic` | `cpuCoreLogic` |
+| websocket | Message | `TaskId` | `TaskID` | `taskId` |
+
+#### 模块重构
 
 **模块名从 `pango` 改为 `libgo`**
 
