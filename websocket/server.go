@@ -32,9 +32,9 @@ func (c *ServerConfig) Handler(handler func(*ServerConn)) gin.HandlerFunc {
 	}
 }
 
-// Read 读取消息
-func (c *ServerConn) Read(v []byte) error {
-	return websocket.Message.Receive(c.Conn, v)
+// Read 读取数据（实现 io.Reader 接口，流式读取）
+func (c *ServerConn) Read(v []byte) (n int, err error) {
+	return c.Conn.Read(v)
 }
 
 // ReadJSON 读取 JSON 消息
@@ -42,9 +42,9 @@ func (c *ServerConn) ReadJSON(v any) error {
 	return websocket.JSON.Receive(c.Conn, v)
 }
 
-// Write 写入消息
-func (c *ServerConn) Write(p []byte) error {
-	return websocket.Message.Send(c.Conn, p)
+// Write 写入数据（实现 io.Writer 接口，流式写入）
+func (c *ServerConn) Write(p []byte) (n int, err error) {
+	return c.Conn.Write(p)
 }
 
 // WriteJSON 写入 JSON 消息
