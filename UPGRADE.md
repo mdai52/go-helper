@@ -185,7 +185,7 @@ data := &command.ScriptPayload{
 output, err := command.RunScript(data)
 
 cmd := command.NewCommand(ctx, "bash", []string{"-c", "ls"}, "/home")
-output, err := command.RunCommand("bash", []string{"-c", "ls"}, "/home", 0, false)
+output, err := command.RunCommand("bash", []string{"-c", "ls"}, "/home", 0)
 ```
 
 ### 快速迁移脚本

@@ -11,18 +11,16 @@ import (
 	"time"
 
 	"github.com/rehiy/libgo/logman"
-	"github.com/rehiy/libgo/strutil"
 )
 
 // ScriptPayload 脚本执行参数
 type ScriptPayload struct {
-	Name          string `json:"name" note:"脚本名称"`
-	ScriptType    string `json:"scriptType" note:"脚本类型 BAT|POWERSHELL|SHELL|EXEC"`
-	Gb18030ToUtf8 bool   `json:"gb18030ToUtf8" note:"是否转换输出文本编码"`
-	Username      string `json:"username" note:"执行脚本的用户名"`
-	WorkDir       string `json:"workDir" note:"脚本工作目录"`
-	Content       string `json:"content" note:"脚本内容"`
-	Timeout       uint   `json:"timeout" note:"超时时间（秒）"`
+	Name       string `json:"name" note:"脚本名称"`
+	ScriptType string `json:"scriptType" note:"脚本类型 BAT|POWERSHELL|SHELL|EXEC"`
+	Username   string `json:"username" note:"执行脚本的用户名"`
+	WorkDir    string `json:"workDir" note:"脚本工作目录"`
+	Content    string `json:"content" note:"脚本内容"`
+	Timeout    uint   `json:"timeout" note:"超时时间（秒）"`
 }
 
 // RunScript 执行脚本并返回输出
@@ -74,7 +72,7 @@ func RunScript(data *ScriptPayload) (string, error) {
 		workDir = filepath.Dir(bin)
 	}
 
-	return RunCommand(bin, arg, workDir, data.Timeout, data.Gb18030ToUtf8)
+	return RunCommand(bin, arg, workDir, data.Timeout)
 }
 
 // NewCommand 创建命令对象
@@ -105,7 +103,7 @@ func NewCommand(ctx context.Context, bin string, arg []string, workDir string) *
 }
 
 // RunCommand 执行命令并返回输出
-func RunCommand(bin string, arg []string, workDir string, timeout uint, gb18030ToUtf8 bool) (string, error) {
+func RunCommand(bin string, arg []string, workDir string, timeout uint) (string, error) {
 	logman.Debug("执行命令", "bin", bin, "arg", arg)
 
 	ctx := context.Background()
@@ -117,13 +115,7 @@ func RunCommand(bin string, arg []string, workDir string, timeout uint, gb18030T
 
 	cmd := NewCommand(ctx, bin, arg, workDir)
 	ret, err := cmd.CombinedOutput()
-	str := string(ret)
-
-	if gb18030ToUtf8 {
-		str = strutil.Gb18030ToUtf8(str)
-	}
-
-	return str, err
+	return string(ret), err
 }
 
 // createTempScript 创建临时脚本文件
