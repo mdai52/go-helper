@@ -22,13 +22,15 @@ go get -u github.com/rehiy/libgo
 
 升级指南：[UPGRADE.md](./UPGRADE.md)
 
+---
+
 ## 模块概览
 
 ### 云服务集成
 
 | 模块 | 说明 |
 |------|------|
-| `cloud/alibaba` | 里云 API 客户端，支持 RPC 风格接口调用 |
+| `cloud/alibaba` | 阿里云 API 客户端，支持 RPC 风格接口调用 |
 | `cloud/tencent` | 腾讯云 API 客户端集成 |
 | `cloud/cloudflare` | Cloudflare API 集成 |
 
@@ -42,43 +44,43 @@ go get -u github.com/rehiy/libgo
 
 | 模块 | 说明 |
 |------|------|
-| `secure` | 加密工具集：Bcrypt 密码哈希、DES3 加密、MD5、SSH 密钥生成 |
+| `secure` | 加密工具集：Bcrypt 密码哈希、DES3-CBC 加密、MD5 哈希、SSH 密钥生成 |
 | `certify` | SSL 证书自动管理（支持 DNS-01/HTTP-01 验证，通配符域名） |
 
 ### 网络与通信
 
 | 模块 | 说明 |
 |------|------|
-| `request` | HTTP 客户端，支持 JSON/表单请求、文件下载 |
+| `request` | HTTP 客户端，支持 JSON/表单请求、文件下载、进度显示 |
 | `httpd` | HTTP 服务器（基于 Gin），含 Recovery 中间件、静态文件服务 |
-| `websocket` | WebSocket 客户端/服务器封装 |
+| `websocket` | WebSocket 客户端/服务器封装，支持 Origin 验证 |
 | `webssh` | SSH 客户端，支持密码和私钥认证 |
-| `tcprelay` | TCP 数据转发 |
+| `tcprelay` | WebSocket 到 TCP 数据转发 |
 
 ### 系统监控
 
 | 模块 | 说明 |
 |------|------|
-| `psutil` | 系统信息采集：CPU、内存、硬盘、网络、主机信息 |
+| `psutil` | 系统信息采集：CPU、内存、硬盘、网络、主机信息、公网 IP |
 | `gpu` | GPU 信息采集，支持 NVIDIA、AMD、Intel、Apple GPU |
-| `command` | 系统命令执行工具，支持 Shell 和直接执行 |
+| `command` | 系统命令执行工具，支持 Shell/BAT/PowerShell/EXEC 模式 |
 
 ### 日志与文件
 
 | 模块 | 说明 |
 |------|------|
-| `logman` | 结构化日志管理（基于 slog），支持日志轮转 |
-| `filer` | 文件操作：读写、列表、权限管理、嵌入文件支持 |
-| `archive` | 归档工具：ZIP 压缩/解压 |
+| `logman` | 结构化日志管理（基于 slog），支持日志轮转、多级别输出 |
+| `filer` | 文件操作：读写、列表、权限管理、软链接、嵌入文件支持 |
+| `archive` | 归档工具：ZIP 压缩/解压，防 Zip Slip 攻击 |
 
 ### 工具函数
 
 | 模块 | 说明 |
 |------|------|
-| `strutil` | 字符串处理：随机生成、编码转换、文本清理 |
-| `ttlcache` | 带过期时间的内存缓存 |
+| `strutil` | 字符串处理：随机生成、UUID v7、编码转换、大小写转换 |
+| `ttlcache` | 带过期时间的内存缓存，自动清理 |
 | `signal` | 程序退出信号处理（SIGTERM/SIGINT） |
-| `upgrade` | 应用自更新服务 |
+| `upgrade` | 应用自更新服务，支持校验、备份、回滚 |
 
 ---
 
@@ -106,6 +108,7 @@ db.Create(&User{Name: "test"})
 ```go
 import "github.com/rehiy/libgo/request"
 
+// 使用 Client 结构体
 client := &request.Client{
     Method:  "POST",
     Url:     "https://api.example.com/data",
@@ -119,6 +122,28 @@ body, err := client.JsonRequest()
 
 // 表单请求
 text, err := client.TextRequest()
+
+// 快捷方法
+body, err := request.Get("https://api.example.com/data", request.H{})
+body, err := request.JsonPost("https://api.example.com/data", map[string]string{"key": "value"}, request.H{})
+body, err := request.JsonPut("https://api.example.com/data", data, request.H{})
+body, err := request.JsonPatch("https://api.example.com/data", data, request.H{})
+body, err := request.Delete("https://api.example.com/data", request.H{})
+```
+
+### 文件下载
+
+```go
+import "github.com/rehiy/libgo/request"
+
+// 下载文件（显示进度条）
+filepath, err := request.Download("https://example.com/file.zip", "/tmp/file.zip", false)
+
+// 下载并自动解压 gzip
+filepath, err := request.Download("https://example.com/file.tar.gz", "/tmp/file.tar", true)
+
+// 下载到临时文件
+filepath, err := request.Download("https://example.com/file", "", false)
 ```
 
 ### 日志记录
@@ -134,8 +159,10 @@ logger.Error("Operation failed", "error", err, "code", 500)
 // 格式化输出
 logger.Infof("User %s logged in", username)
 
-// 设置输出文件和日志级别
+// 设置输出文件（自动轮转）
 logman.SetOutput("/var/log/myapp.log")
+
+// 设置日志级别
 logman.SetLevel(logman.LevelDebug)
 ```
 
@@ -178,6 +205,33 @@ for _, stat := range stats {
         stat.MemoryUsed/1024/1024, stat.MemoryTotal/1024/1024,
         stat.Temperature)
 }
+```
+
+### 命令执行
+
+```go
+import "github.com/rehiy/libgo/command"
+
+// 执行 Shell 脚本
+output, err := command.RunScript(&command.ScriptPayload{
+    ScriptType: "SHELL",
+    Content:    "ls -la",
+    WorkDir:    "/home",
+    Timeout:    10,
+})
+
+// 执行 PowerShell（Windows）
+output, err := command.RunScript(&command.ScriptPayload{
+    ScriptType: "POWERSHELL",
+    Content:    "Get-Process",
+    Timeout:    30,
+})
+
+// 直接执行命令
+output, err := command.RunCommand("ls", []string{"-la"}, "/home", 10)
+
+// 获取系统默认 Shell
+shell := command.DefaultShell()
 ```
 
 ### SSH 连接
@@ -223,6 +277,47 @@ var msg Message
 conn.ReadJSON(&msg)
 
 conn.Close()
+```
+
+### WebSocket 服务器
+
+```go
+import "github.com/rehiy/libgo/websocket"
+
+// 配置服务端
+config := &websocket.ServerConfig{
+    AllowedOrigins: []string{"https://example.com", "*.example.com"},
+}
+
+// 创建处理器
+httpd.GET("/ws", config.Handler(func(conn *websocket.ServerConn) {
+    defer conn.Close()
+    
+    for {
+        buf := make([]byte, 1024)
+        n, err := conn.Read(buf)
+        if err != nil {
+            break
+        }
+        conn.Write(buf[:n])
+    }
+}))
+```
+
+### TCP 转发
+
+```go
+import "github.com/rehiy/libgo/tcprelay"
+
+// WebSocket 到 TCP 转发
+httpd.GET("/tcp", func(c *gin.Context) {
+    websocket.Handler(func(ws *websocket.Conn) {
+        tcprelay.Relay(ws, &tcprelay.Param{
+            TargetAddr: "localhost:22",
+            BinaryMode: false,
+        })
+    }).ServeHTTP(c.Writer, c.Request)
+})
 ```
 
 ### HTTP 服务器
@@ -291,10 +386,11 @@ handler := manager.HTTPHandler(http.HandlerFunc(func(w http.ResponseWriter, r *h
 ```go
 import "github.com/rehiy/libgo/filer"
 
-// 列出目录文件
+// 列出目录文件（含权限和所有者信息）
 files, err := filer.List("/path/to/dir")
 for _, f := range files {
-    fmt.Printf("%s: %d bytes, owner: %s\n", f.Name, f.Size, f.Owner)
+    fmt.Printf("%s: %d bytes, owner: %s, group: %s, mode: %s\n",
+        f.Name, f.Size, f.Owner, f.Group, f.Mode)
 }
 
 // 获取文件信息（含内容）
@@ -306,6 +402,34 @@ filer.Write("/path/to/file.txt", []byte("content"))
 
 // 追加内容
 filer.Append("/path/to/log.txt", []byte("new line\n"))
+
+// 读取文件内容
+content, err := filer.Read("/path/to/file.txt")
+text, err := filer.ReadText("/path/to/file.txt")
+
+// 判断文件状态
+filer.Exist("/path/to/file")      // 是否存在
+filer.NotExist("/path/to/file")   // 是否不存在
+filer.IsDir("/path/to/dir")       // 是否目录
+filer.IsLink("/path/to/link")     // 是否软链接
+filer.Readlink("/path/to/link")   // 获取软链接目标
+```
+
+### ZIP 归档
+
+```go
+import "github.com/rehiy/libgo/archive"
+
+zipper := archive.NewZipper()
+
+// 压缩文件
+err := zipper.Zip("/path/to/file")  // 生成 file.zip
+
+// 压缩目录
+err := zipper.Zip("/path/to/dir")   // 生成 dir.zip
+
+// 解压文件
+err := zipper.Unzip("/path/to/archive.zip")
 ```
 
 ### 密码哈希
@@ -323,6 +447,43 @@ valid := secure.BcryptVerify("password123", hash)
 isBcrypt := secure.IsBcrypt(hash)
 ```
 
+### DES3 加密
+
+```go
+import "github.com/rehiy/libgo/secure"
+
+// DES3-CBC 加密
+encrypted, err := secure.Des3Encrypt("secret data", "password")
+
+// DES3-CBC 解密
+decrypted, err := secure.Des3Decrypt(encrypted, "password")
+```
+
+### MD5 哈希
+
+```go
+import "github.com/rehiy/libgo/secure"
+
+// 计算字符串 MD5
+hash := secure.MD5sum("content")
+
+// 计算文件 MD5
+hash, err := secure.FileMD5sum("/path/to/file")
+```
+
+### SSH 密钥生成
+
+```go
+import "github.com/rehiy/libgo/secure"
+
+// 生成 RSA 4096 位密钥对
+privateKey, publicKey, err := secure.NewSSHKeypair()
+
+// 保存到文件
+filer.Write("/path/to/id_rsa", []byte(privateKey))
+filer.Write("/path/to/id_rsa.pub", []byte(publicKey))
+```
+
 ### 随机字符串
 
 ```go
@@ -333,6 +494,101 @@ randStr := strutil.Rand(16)  // 如 "aB3xY9zK2mN7pQ1"
 
 // 生成 UUID v7（时间排序）
 uuid := strutil.NewString()
+```
+
+### 字符串转换
+
+```go
+import "github.com/rehiy/libgo/strutil"
+
+// 字符串转整数
+num := strutil.ToInt("123")   // 123
+
+// 字符串转无符号整数
+num := strutil.ToUint("123")  // 123
+
+// 首字母大写
+str := strutil.FirstUpper("hello")  // "Hello"
+
+// 首字母小写
+str := strutil.FirstLower("Hello")  // "hello"
+
+// 编码转换 GB18030 -> UTF-8
+utf8Str := strutil.Gb18030ToUtf8(gbStr)
+```
+
+### TTL 缓存
+
+```go
+import "github.com/rehiy/libgo/ttlcache"
+
+// 创建缓存（过期时间 5 分钟）
+cache := ttlcache.NewTimedCache(5 * time.Minute)
+
+// 设置缓存值
+cache.Set("key", "value")
+
+// 获取缓存值（过期返回 nil, false）
+value, ok := cache.Get("key")
+
+// 手动清理过期项
+cache.DeleteExpired()
+
+// 停止自动清理
+cache.StopCleanup()
+```
+
+### 应用自更新
+
+```go
+import "github.com/rehiy/libgo/upgrade"
+
+// 检查更新
+info, err := upgrade.CheckUpdate(&upgrade.UpdateParam{
+    Server:  "https://update.example.com/check",
+    Version: "1.0.0",
+})
+
+// 执行更新
+err := upgrade.ApplyUpdate(&upgrade.UpdateParam{
+    Server:  "https://update.example.com/check",
+    Version: "1.0.0",
+})
+
+// 重启应用
+err := upgrade.Restart()
+```
+
+### 云服务 API 调用
+
+```go
+import "github.com/rehiy/libgo/cloud/alibaba"
+
+// 阿里云 API 请求
+result, err := alibaba.Request(&alibaba.RequestParam{
+    Service:   "ecs",           // 产品名称
+    Version:   "2014-05-26",    // API 版本
+    Action:    "DescribeInstances",
+    RegionId:  "cn-hangzhou",
+    SecretId:  "AccessKeyId",
+    SecretKey: "AccessKeySecret",
+    Query:     map[string]string{"PageNumber": "1"},
+})
+```
+
+```go
+import "github.com/rehiy/libgo/cloud/tencent"
+
+// 腾讯云 API 请求
+result, err := tencent.Request(&tencent.RequestParam{
+    Service:   "cvm",           // 产品名称
+    Version:   "2017-03-12",    // API 版本
+    Action:    "DescribeInstances",
+    Region:    "ap-guangzhou",
+    SecretId:  "SecretId",
+    SecretKey: "SecretKey",
+    Payload:   map[string]int{"Offset": 0, "Limit": 10},
+})
 ```
 
 ---
@@ -347,6 +603,7 @@ uuid := strutil.NewString()
 | [ghw](https://github.com/jaypipes/ghw) | GPU 硬件信息 |
 | [Lumberjack](https://github.com/natefinch/lumberjack) | 日志轮转 |
 | [libdns](https://github.com/libdns/libdns) | DNS Provider 抽象 |
+| [openssl](https://github.com/forgoer/openssl) | DES3 加密 |
 
 ---
 
