@@ -174,9 +174,13 @@ func (u *Updater) Apply() error {
 
 // Restart restarts the current process.
 func (u *Updater) Restart() error {
-	self, err := os.Executable()
-	if err != nil {
-		return err
+	self := u.TargetPath
+	if self == "" {
+		var err error
+		self, err = os.Executable()
+		if err != nil {
+			return err
+		}
 	}
 
 	args, env := os.Args, os.Environ()
@@ -187,7 +191,7 @@ func (u *Updater) Restart() error {
 		cmd.Stderr = os.Stderr
 		cmd.Stdin = os.Stdin
 		cmd.Env = env
-		if err = cmd.Start(); err != nil {
+		if err := cmd.Start(); err != nil {
 			return err
 		}
 		os.Exit(0)
