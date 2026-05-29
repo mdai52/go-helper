@@ -34,7 +34,7 @@ type sftpEntry struct {
 	lastUsed time.Time
 }
 
-// SFTPClient SFTP 客户端，内置连接池，按 key 复用连接
+// SFTPClient SFTP 客户端，内置连接池，按 user@addr 复用连接
 type SFTPClient struct {
 	mu          sync.Mutex
 	entries     map[string]*sftpEntry
@@ -73,8 +73,8 @@ func (c *SFTPClient) Close() {
 }
 
 // List 列出目录内容，dirPath 为空或 "~" 时使用远程 home 目录
-func (c *SFTPClient) List(key string, opt *SSHClientOption, dirPath string) (*ListResult, error) {
-	conn, err := c.getConn(key, opt)
+func (c *SFTPClient) List(opt *SSHClientOption, dirPath string) (*ListResult, error) {
+	conn, err := c.getConn(opt)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,7 @@ func (c *SFTPClient) List(key string, opt *SSHClientOption, dirPath string) (*Li
 
 	entries, err := conn.ReadDir(dirPath)
 	if err != nil {
-		c.invalidate(key)
+		c.invalidate(opt)
 		return nil, fmt.Errorf("读取目录失败: %w", err)
 	}
 
@@ -151,8 +151,8 @@ func (c *SFTPClient) Download(opt *SSHClientOption, filePath string) (io.ReadClo
 }
 
 // Upload 将 src 上传到远程 destPath（覆盖）
-func (c *SFTPClient) Upload(key string, opt *SSHClientOption, destPath string, src io.Reader) error {
-	conn, err := c.getConn(key, opt)
+func (c *SFTPClient) Upload(opt *SSHClientOption, destPath string, src io.Reader) error {
+	conn, err := c.getConn(opt)
 	if err != nil {
 		return err
 	}
@@ -172,8 +172,8 @@ func (c *SFTPClient) Upload(key string, opt *SSHClientOption, destPath string, s
 }
 
 // Remove 删除文件或目录；recursive=true 时递归删除目录
-func (c *SFTPClient) Remove(key string, opt *SSHClientOption, targetPath string, recursive bool) error {
-	conn, err := c.getConn(key, opt)
+func (c *SFTPClient) Remove(opt *SSHClientOption, targetPath string, recursive bool) error {
+	conn, err := c.getConn(opt)
 	if err != nil {
 		return err
 	}
@@ -186,7 +186,7 @@ func (c *SFTPClient) Remove(key string, opt *SSHClientOption, targetPath string,
 	if stat.IsDir() {
 		if recursive {
 			if err := removeAll(conn, targetPath); err != nil {
-				c.invalidate(key)
+				c.invalidate(opt)
 				return fmt.Errorf("递归删除目录失败: %w", err)
 			}
 		} else {
@@ -196,7 +196,7 @@ func (c *SFTPClient) Remove(key string, opt *SSHClientOption, targetPath string,
 		}
 	} else {
 		if err := conn.Remove(targetPath); err != nil {
-			c.invalidate(key)
+			c.invalidate(opt)
 			return fmt.Errorf("删除文件失败: %w", err)
 		}
 	}
@@ -204,32 +204,37 @@ func (c *SFTPClient) Remove(key string, opt *SSHClientOption, targetPath string,
 }
 
 // Mkdir 递归创建目录
-func (c *SFTPClient) Mkdir(key string, opt *SSHClientOption, dirPath string) error {
-	conn, err := c.getConn(key, opt)
+func (c *SFTPClient) Mkdir(opt *SSHClientOption, dirPath string) error {
+	conn, err := c.getConn(opt)
 	if err != nil {
 		return err
 	}
 	if err := conn.MkdirAll(dirPath); err != nil {
-		c.invalidate(key)
+		c.invalidate(opt)
 		return fmt.Errorf("创建目录失败: %w", err)
 	}
 	return nil
 }
 
 // Rename 重命名/移动文件或目录
-func (c *SFTPClient) Rename(key string, opt *SSHClientOption, oldPath, newPath string) error {
-	conn, err := c.getConn(key, opt)
+func (c *SFTPClient) Rename(opt *SSHClientOption, oldPath, newPath string) error {
+	conn, err := c.getConn(opt)
 	if err != nil {
 		return err
 	}
 	if err := conn.Rename(oldPath, newPath); err != nil {
-		c.invalidate(key)
+		c.invalidate(opt)
 		return fmt.Errorf("重命名失败: %w", err)
 	}
 	return nil
 }
 
 // ── 内部方法 ────────────────────────────────────────────────────────────────
+
+// connKey 从 opt 派生连接池 key，格式为 user@addr
+func connKey(opt *SSHClientOption) string {
+	return opt.User + "@" + opt.Addr
+}
 
 // dial 建立一个新的独占 SSH+SFTP 连接
 func (c *SFTPClient) dial(opt *SSHClientOption) (*sftp.Client, error) {
@@ -248,7 +253,9 @@ func (c *SFTPClient) dial(opt *SSHClientOption) (*sftp.Client, error) {
 // getConn 从连接池获取连接，不存在或已失效则新建
 // 使用 CAS 风格：先取出旧连接探活，失败后用 dial 建新连接，
 // 最后在锁内做 check-then-set，避免并发时 double-close 和连接泄漏。
-func (c *SFTPClient) getConn(key string, opt *SSHClientOption) (*sftp.Client, error) {
+func (c *SFTPClient) getConn(opt *SSHClientOption) (*sftp.Client, error) {
+	key := connKey(opt)
+
 	// 1. 取出当前缓存的连接（快速路径）
 	c.mu.Lock()
 	e, ok := c.entries[key]
@@ -293,8 +300,9 @@ func (c *SFTPClient) getConn(key string, opt *SSHClientOption) (*sftp.Client, er
 	return conn, nil
 }
 
-// invalidate 主动移除某个 key 的缓存（连接出错时调用）
-func (c *SFTPClient) invalidate(key string) {
+// invalidate 主动移除某个连接的缓存（连接出错时调用）
+func (c *SFTPClient) invalidate(opt *SSHClientOption) {
+	key := connKey(opt)
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	if e, ok := c.entries[key]; ok {
