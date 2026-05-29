@@ -16,6 +16,7 @@ require (
 	github.com/libdns/alidns v1.0.7
 	github.com/libdns/libdns v1.1.1
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/pkg/sftp v1.13.10
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.93
 	golang.org/x/crypto v0.51.0
@@ -62,6 +63,7 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/lufia/plan9stats v0.0.0-20260330125221-c963978e514e // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
