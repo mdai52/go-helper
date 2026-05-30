@@ -406,6 +406,52 @@ func (c *SFTPClient) Truncate(opt *SSHClientOption, path string, size int64) err
 	return nil
 }
 
+// IsTextFile 判断远程文件是否为文本文件
+// 通过读取文件的前 512 字节，检查是否包含非文本字符（如 null 字节）
+func (c *SFTPClient) IsTextFile(opt *SSHClientOption, filePath string) (bool, error) {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return false, err
+	}
+
+	f, err := conn.Open(filePath)
+	if err != nil {
+		return false, fmt.Errorf("打开文件失败: %w", err)
+	}
+	defer f.Close()
+
+	// 读取前 512 字节进行判断（与 http.DetectContentType 的逻辑类似）
+	buf := make([]byte, 512)
+	n, err := f.Read(buf)
+	if err != nil && n == 0 {
+		return false, fmt.Errorf("读取文件失败: %w", err)
+	}
+	buf = buf[:n]
+
+	// 检查是否包含 null 字节，包含则认为是二进制文件
+	for _, b := range buf {
+		if b == 0 {
+			return false, nil
+		}
+	}
+
+	// 检查是否包含过多非打印字符
+	nonPrintable := 0
+	for _, b := range buf {
+		// 允许：tab (9), newline (10), carriage return (13), 空格 (32) 及以上
+		if b < 9 || (b > 13 && b < 32) || b == 127 {
+			nonPrintable++
+		}
+	}
+
+	// 如果非打印字符超过 10%，认为是二进制文件
+	if len(buf) > 0 && float64(nonPrintable)/float64(len(buf)) > 0.1 {
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // ── 内部方法 ────────────────────────────────────────────────────────────────
 
 // connKey 从 opt 派生连接池 key，格式为 user@addr
