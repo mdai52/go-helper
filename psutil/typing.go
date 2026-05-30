@@ -7,16 +7,19 @@ import (
 // Go 内存信息
 
 type GoMemoryStat struct {
-	Alloc      uint64 `note:"已分配内存" json:"alloc"`
-	Sys        uint64 `note:"已申请内存" json:"sys"`
-	HeapAlloc  uint64 `note:"堆已分配内存" json:"heapAlloc"`
-	HeapInuse  uint64 `note:"堆已使用内存" json:"heapInuse"`
-	HeapSys    uint64 `note:"堆已申请内存" json:"heapSys"`
-	StackInuse uint64 `note:"栈已使用内存" json:"stackInuse"`
-	StackSys   uint64 `note:"栈已申请内存" json:"stackSys"`
-	TotalAlloc uint64 `note:"累计已分配内存" json:"totalAlloc"`
-	LastGC     uint64 `note:"最后一次 GC 时间" json:"lastGC"`
-	NumGC      uint32 `note:"GC 执行次数" json:"numGC"`
+	Alloc        uint64 `note:"已分配内存" json:"alloc"`
+	Sys          uint64 `note:"已申请内存" json:"sys"`
+	HeapAlloc    uint64 `note:"堆已分配内存" json:"heapAlloc"`
+	HeapInuse    uint64 `note:"堆已使用内存" json:"heapInuse"`
+	HeapIdle     uint64 `note:"堆空闲内存" json:"heapIdle"`
+	HeapReleased uint64 `note:"堆已释放内存" json:"heapReleased"`
+	HeapObjects  uint64 `note:"堆对象数量" json:"heapObjects"`
+	HeapSys      uint64 `note:"堆已申请内存" json:"heapSys"`
+	StackInuse   uint64 `note:"栈已使用内存" json:"stackInuse"`
+	StackSys     uint64 `note:"栈已申请内存" json:"stackSys"`
+	TotalAlloc   uint64 `note:"累计已分配内存" json:"totalAlloc"`
+	LastGC       uint64 `note:"最后一次 GC 时间" json:"lastGC"`
+	NumGC        uint32 `note:"GC 执行次数" json:"numGC"`
 }
 
 // 系统概要信息
