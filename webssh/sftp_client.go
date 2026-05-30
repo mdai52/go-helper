@@ -95,20 +95,22 @@ func (c *SFTPClient) List(opt *SSHClientOption, dirPath string) (*ListResult, er
 
 	files := make([]*FileInfo, 0, len(entries))
 	for _, e := range entries {
-		isLink := e.Mode()&os.ModeSymlink != 0
-		isDir := e.IsDir()
+		isDir := false
 		var linkTarget string
+		isLink := e.Mode()&os.ModeSymlink != 0
 		if isLink {
 			fullPath := path.Join(dirPath, e.Name())
+			// 符号链接：使用 Stat 获取链接目标的信息来判断是否为目录
 			if info, err := conn.Stat(fullPath); err == nil {
 				isDir = info.IsDir()
-			} else {
-				// Stat 失败（如悬空链接），明确置为 false
-				isDir = false
 			}
+			// 使用 ReadLink 获取符号链接目标
 			if target, err := conn.ReadLink(fullPath); err == nil {
 				linkTarget = target
 			}
+		} else {
+			// 非符号链接：直接使用 e.IsDir()
+			isDir = e.IsDir()
 		}
 		files = append(files, &FileInfo{
 			Name:       e.Name(),
@@ -123,34 +125,59 @@ func (c *SFTPClient) List(opt *SSHClientOption, dirPath string) (*ListResult, er
 	return &ListResult{Path: dirPath, Files: files}, nil
 }
 
-// Download 打开远程文件用于下载，返回 ReadCloser 和文件大小。
-// 下载使用独占连接（流式传输期间不能被复用），关闭 ReadCloser 时连接一并释放。
-func (c *SFTPClient) Download(opt *SSHClientOption, filePath string) (io.ReadCloser, int64, error) {
-	conn, err := c.dial(opt)
+// DirSize 递归计算目录大小（包含所有子目录和文件）
+func (c *SFTPClient) DirSize(opt *SSHClientOption, dirPath string) (int64, error) {
+	conn, err := c.getConn(opt)
 	if err != nil {
-		return nil, 0, err
+		return 0, err
 	}
 
-	stat, err := conn.Stat(filePath)
-	if err != nil {
-		conn.Close()
-		return nil, 0, fmt.Errorf("文件不存在: %w", err)
+	var totalSize int64
+	walker := conn.Walk(dirPath)
+	for walker.Step() {
+		if err := walker.Err(); err != nil {
+			c.invalidate(opt)
+			return 0, fmt.Errorf("遍历目录失败: %w", err)
+		}
+		info := walker.Stat()
+		if info == nil {
+			continue
+		}
+		// 跳过符号链接，避免循环或重复计算
+		if info.Mode()&os.ModeSymlink != 0 {
+			continue
+		}
+		// 只累加文件大小，目录本身的大小（通常是 4096）不计入
+		if !info.IsDir() {
+			totalSize += info.Size()
+		}
 	}
-	if stat.IsDir() {
-		conn.Close()
-		return nil, 0, fmt.Errorf("不能下载目录")
+	return totalSize, nil
+}
+
+// Download 下载远程文件到 dst（使用 WriteTo 优化传输）
+func (c *SFTPClient) Download(opt *SSHClientOption, filePath string, dst io.Writer) error {
+	conn, err := c.dial(opt)
+	if err != nil {
+		return err
 	}
 
 	f, err := conn.Open(filePath)
 	if err != nil {
 		conn.Close()
-		return nil, 0, fmt.Errorf("打开文件失败: %w", err)
+		return fmt.Errorf("打开文件失败: %w", err)
 	}
 
-	return &downloadCloser{ReadCloser: f, conn: conn}, stat.Size(), nil
+	defer func() {
+		f.Close()
+		conn.Close()
+	}()
+
+	_, err = f.WriteTo(dst)
+	return err
 }
 
-// Upload 将 src 上传到远程 destPath（覆盖）
+// Upload 上传 src 到远程 destPath（使用 ReadFrom 优化传输）
 func (c *SFTPClient) Upload(opt *SSHClientOption, destPath string, src io.Reader) error {
 	conn, err := c.getConn(opt)
 	if err != nil {
@@ -164,7 +191,7 @@ func (c *SFTPClient) Upload(opt *SSHClientOption, destPath string, src io.Reader
 	}
 	defer f.Close()
 
-	if _, err := io.Copy(f, src); err != nil {
+	if _, err := f.ReadFrom(src); err != nil {
 		// 写入失败（如磁盘满）不代表连接断开，不 invalidate
 		return fmt.Errorf("写入文件失败: %w", err)
 	}
@@ -178,26 +205,15 @@ func (c *SFTPClient) Remove(opt *SSHClientOption, targetPath string, recursive b
 		return err
 	}
 
-	stat, err := conn.Stat(targetPath)
-	if err != nil {
-		return fmt.Errorf("路径不存在: %w", err)
-	}
-
-	if stat.IsDir() {
-		if recursive {
-			if err := removeAll(conn, targetPath); err != nil {
-				c.invalidate(opt)
-				return fmt.Errorf("递归删除目录失败: %w", err)
-			}
-		} else {
-			if err := conn.RemoveDirectory(targetPath); err != nil {
-				return fmt.Errorf("删除目录失败（目录非空时请使用递归删除）: %w", err)
-			}
+	if recursive {
+		if err := conn.RemoveAll(targetPath); err != nil {
+			c.invalidate(opt)
+			return fmt.Errorf("递归删除失败: %w", err)
 		}
 	} else {
 		if err := conn.Remove(targetPath); err != nil {
 			c.invalidate(opt)
-			return fmt.Errorf("删除文件失败: %w", err)
+			return fmt.Errorf("删除失败: %w", err)
 		}
 	}
 	return nil
@@ -225,6 +241,167 @@ func (c *SFTPClient) Rename(opt *SSHClientOption, oldPath, newPath string) error
 	if err := conn.Rename(oldPath, newPath); err != nil {
 		c.invalidate(opt)
 		return fmt.Errorf("重命名失败: %w", err)
+	}
+	return nil
+}
+
+// Stat 获取文件/目录信息（跟随符号链接）
+func (c *SFTPClient) Stat(opt *SSHClientOption, p string) (os.FileInfo, error) {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return nil, err
+	}
+	info, err := conn.Stat(p)
+	if err != nil {
+		c.invalidate(opt)
+		return nil, fmt.Errorf("获取文件信息失败: %w", err)
+	}
+	return info, nil
+}
+
+// Lstat 获取文件信息（不跟随符号链接，返回链接本身的信息）
+func (c *SFTPClient) Lstat(opt *SSHClientOption, p string) (os.FileInfo, error) {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return nil, err
+	}
+	info, err := conn.Lstat(p)
+	if err != nil {
+		c.invalidate(opt)
+		return nil, fmt.Errorf("获取文件信息失败: %w", err)
+	}
+	return info, nil
+}
+
+// ReadLink 读取符号链接的目标路径
+func (c *SFTPClient) ReadLink(opt *SSHClientOption, p string) (string, error) {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return "", err
+	}
+	target, err := conn.ReadLink(p)
+	if err != nil {
+		c.invalidate(opt)
+		return "", fmt.Errorf("读取符号链接失败: %w", err)
+	}
+	return target, nil
+}
+
+// Symlink 创建符号链接，newname 指向 oldname
+func (c *SFTPClient) Symlink(opt *SSHClientOption, oldname, newname string) error {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return err
+	}
+	if err := conn.Symlink(oldname, newname); err != nil {
+		c.invalidate(opt)
+		return fmt.Errorf("创建符号链接失败: %w", err)
+	}
+	return nil
+}
+
+// Link 创建硬链接，newname 指向 oldname 的同一个 inode
+func (c *SFTPClient) Link(opt *SSHClientOption, oldname, newname string) error {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return err
+	}
+	if err := conn.Link(oldname, newname); err != nil {
+		c.invalidate(opt)
+		return fmt.Errorf("创建硬链接失败: %w", err)
+	}
+	return nil
+}
+
+// Chmod 修改文件权限
+func (c *SFTPClient) Chmod(opt *SSHClientOption, path string, mode os.FileMode) error {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return err
+	}
+	if err := conn.Chmod(path, mode); err != nil {
+		c.invalidate(opt)
+		return fmt.Errorf("修改权限失败: %w", err)
+	}
+	return nil
+}
+
+// Chown 修改文件所有者和组
+func (c *SFTPClient) Chown(opt *SSHClientOption, path string, uid, gid int) error {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return err
+	}
+	if err := conn.Chown(path, uid, gid); err != nil {
+		c.invalidate(opt)
+		return fmt.Errorf("修改所有者失败: %w", err)
+	}
+	return nil
+}
+
+// Chtimes 修改文件访问时间和修改时间
+func (c *SFTPClient) Chtimes(opt *SSHClientOption, path string, atime, mtime time.Time) error {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return err
+	}
+	if err := conn.Chtimes(path, atime, mtime); err != nil {
+		c.invalidate(opt)
+		return fmt.Errorf("修改时间失败: %w", err)
+	}
+	return nil
+}
+
+// PosixRename 重命名文件，如果目标存在则替换（使用 posix-rename@openssh.com 扩展）
+func (c *SFTPClient) PosixRename(opt *SSHClientOption, oldname, newname string) error {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return err
+	}
+	if err := conn.PosixRename(oldname, newname); err != nil {
+		c.invalidate(opt)
+		return fmt.Errorf("POSIX 重命名失败: %w", err)
+	}
+	return nil
+}
+
+// StatVFS 获取文件系统统计信息（需要服务器支持 statvfs@openssh.com 扩展）
+func (c *SFTPClient) StatVFS(opt *SSHClientOption, path string) (*sftp.StatVFS, error) {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return nil, err
+	}
+	stat, err := conn.StatVFS(path)
+	if err != nil {
+		c.invalidate(opt)
+		return nil, fmt.Errorf("获取文件系统信息失败: %w", err)
+	}
+	return stat, nil
+}
+
+// RealPath 规范化路径（解析 ".."、相对路径等）
+func (c *SFTPClient) RealPath(opt *SSHClientOption, path string) (string, error) {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return "", err
+	}
+	realPath, err := conn.RealPath(path)
+	if err != nil {
+		c.invalidate(opt)
+		return "", fmt.Errorf("解析真实路径失败: %w", err)
+	}
+	return realPath, nil
+}
+
+// Truncate 截断文件到指定大小
+func (c *SFTPClient) Truncate(opt *SSHClientOption, path string, size int64) error {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return err
+	}
+	if err := conn.Truncate(path, size); err != nil {
+		c.invalidate(opt)
+		return fmt.Errorf("截断文件失败: %w", err)
 	}
 	return nil
 }
@@ -335,40 +512,4 @@ func (c *SFTPClient) evictLoop() {
 			return
 		}
 	}
-}
-
-// downloadCloser 包装 sftp.File，Close 时同时关闭底层独占连接
-type downloadCloser struct {
-	io.ReadCloser
-	conn *sftp.Client
-}
-
-func (d *downloadCloser) Close() error {
-	fileErr := d.ReadCloser.Close()
-	connErr := d.conn.Close()
-	if fileErr != nil {
-		return fileErr
-	}
-	return connErr
-}
-
-// removeAll 递归删除目录及其所有内容（类似 rm -rf）
-func removeAll(conn *sftp.Client, dirPath string) error {
-	entries, err := conn.ReadDir(dirPath)
-	if err != nil {
-		return err
-	}
-	for _, e := range entries {
-		childPath := path.Join(dirPath, e.Name())
-		if e.IsDir() {
-			if err := removeAll(conn, childPath); err != nil {
-				return err
-			}
-		} else {
-			if err := conn.Remove(childPath); err != nil {
-				return err
-			}
-		}
-	}
-	return conn.RemoveDirectory(dirPath)
 }
