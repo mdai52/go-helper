@@ -452,6 +452,54 @@ func (c *SFTPClient) IsTextFile(opt *SSHClientOption, filePath string) (bool, er
 	return true, nil
 }
 
+// Glob 根据模式匹配文件路径（如 *.txt, /path/*.log）
+// 返回匹配的文件路径列表
+func (c *SFTPClient) Glob(opt *SSHClientOption, pattern string) ([]string, error) {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return nil, err
+	}
+
+	matches, err := conn.Glob(pattern)
+	if err != nil {
+		c.invalidate(opt)
+		return nil, fmt.Errorf("模式匹配失败: %w", err)
+	}
+	return matches, nil
+}
+
+// Move 移动文件或目录（实际上是重命名的封装，支持跨目录移动）
+// 如果目标路径已存在，根据 overwrite 参数决定是否覆盖
+func (c *SFTPClient) Move(opt *SSHClientOption, srcPath, dstPath string, overwrite bool) error {
+	conn, err := c.getConn(opt)
+	if err != nil {
+		return err
+	}
+
+	// 检查目标是否存在
+	if info, err := conn.Stat(dstPath); err == nil {
+		if !overwrite {
+			return fmt.Errorf("目标路径已存在: %s", dstPath)
+		}
+		// 如果目标是目录，且源也是目录，需要特殊处理
+		if info.IsDir() {
+			// 目标存在且是目录，可以将源移动到目标目录下
+			dstPath = path.Join(dstPath, path.Base(srcPath))
+		}
+		// 如果目标存在且允许覆盖，先删除目标
+		if err := conn.Remove(dstPath); err != nil {
+			c.invalidate(opt)
+			return fmt.Errorf("删除目标路径失败: %w", err)
+		}
+	}
+
+	if err := conn.Rename(srcPath, dstPath); err != nil {
+		c.invalidate(opt)
+		return fmt.Errorf("移动文件失败: %w", err)
+	}
+	return nil
+}
+
 // ── 内部方法 ────────────────────────────────────────────────────────────────
 
 // connKey 从 opt 派生连接池 key，格式为 user@addr
