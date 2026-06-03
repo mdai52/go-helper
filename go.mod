@@ -19,6 +19,7 @@ require (
 	github.com/pkg/sftp v1.13.10
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.3.93
+	github.com/tidwall/gjson v1.19.0
 	golang.org/x/crypto v0.51.0
 	golang.org/x/net v0.54.0
 	golang.org/x/term v0.43.0
@@ -79,6 +80,8 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/shoenig/go-m1cpu v0.2.1 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/tklauser/go-sysconf v0.3.16 // indirect
 	github.com/tklauser/numcpus v0.11.0 // indirect
