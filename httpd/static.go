@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"net/http"
 	"path/filepath"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,6 +50,16 @@ func StaticServe(hfs http.FileSystem, prefix string) gin.HandlerFunc {
 			f.Close()
 			fileHandler.ServeHTTP(c.Writer, c.Request)
 			return
+		}
+
+		// http.FS(embed.FS) 无法直接 Open 目录路径（如 /openapi/），
+		// 需通过探测目录下的 index.html 来确认该目录存在
+		if strings.HasSuffix(path, "/") {
+			if fi, idxErr := hfs.Open(path + "index.html"); idxErr == nil {
+				fi.Close()
+				fileHandler.ServeHTTP(c.Writer, c.Request)
+				return
+			}
 		}
 
 		// 静态资源文件不存在时返回 404
