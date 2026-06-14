@@ -603,7 +603,7 @@ result, err := tencent.Request(&tencent.RequestParam{
 | [ghw](https://github.com/jaypipes/ghw) | GPU 硬件信息 |
 | [Lumberjack](https://github.com/natefinch/lumberjack) | 日志轮转 |
 | [libdns](https://github.com/libdns/libdns) | DNS Provider 抽象 |
-| [openssl](https://github.com/forgoer/openssl) | DES3 加密 |
+| [openssl](https://github.com/go-think/openssl) | DES3 加密 |
 
 ---
 

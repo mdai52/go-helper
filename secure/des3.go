@@ -3,7 +3,7 @@ package secure
 import (
 	"encoding/hex"
 
-	"github.com/forgoer/openssl"
+	"github.com/go-think/openssl"
 )
 
 // Des3Encrypt 使用 DES3-CBC 加密字符串
