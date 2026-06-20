@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -22,6 +23,9 @@ type Client struct {
 	timeout    time.Duration
 	httpClient *http.Client
 	robin      atomic.Uint64 // 轮询计数器，用于多节点负载均衡
+
+	mu    sync.Mutex // 保护 token
+	token string     // 缓存的 auth token
 }
 
 // Config 客户端配置
@@ -88,7 +92,8 @@ func (c *Client) Put(ctx context.Context, key, value string) error {
 	return err
 }
 
-// do 执行一次 HTTP POST 请求，若 ctx 无 deadline 则自动附加 c.timeout
+// do 执行一次 HTTP POST 请求，若 ctx 无 deadline 则自动附加 c.timeout。
+// 当配置了认证且收到 401 时，自动刷新 token 并重试一次。
 func (c *Client) do(ctx context.Context, path string, body []byte) ([]byte, error) {
 	if _, ok := ctx.Deadline(); !ok && c.timeout > 0 {
 		var cancel context.CancelFunc
@@ -96,25 +101,105 @@ func (c *Client) do(ctx context.Context, path string, body []byte) ([]byte, erro
 		defer cancel()
 	}
 
+	for attempt := range 2 {
+		if err := c.ensureToken(ctx); err != nil {
+			return nil, err
+		}
+		raw, statusCode, err := c.doOnce(ctx, path, body)
+		if err != nil {
+			return nil, err
+		}
+		if statusCode == http.StatusUnauthorized && attempt == 0 && c.username != "" {
+			c.resetToken()
+			continue
+		}
+		if statusCode >= 300 {
+			return nil, fmt.Errorf("etcd %s 失败 %d: %s", path, statusCode, raw)
+		}
+		return raw, nil
+	}
+	return nil, fmt.Errorf("etcd %s 认证失败", path) // unreachable
+}
+
+// doOnce 执行单次 HTTP POST 请求，返回响应体、状态码和错误。
+func (c *Client) doOnce(ctx context.Context, path string, body []byte) ([]byte, int, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		c.endpoint()+path, bytes.NewReader(body))
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	c.setAuth(req)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	defer resp.Body.Close()
+
+	raw, _ := io.ReadAll(resp.Body)
+	return raw, resp.StatusCode, nil
+}
+
+// authenticate 调用 /v3/auth/authenticate 获取 token
+func (c *Client) authenticate(ctx context.Context) (string, error) {
+	body, _ := json.Marshal(map[string]string{
+		"name":     c.username,
+		"password": c.password,
+	})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
+		c.endpoint()+"/v3/auth/authenticate", bytes.NewReader(body))
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	raw, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("etcd %s 失败 %d: %s", path, resp.StatusCode, raw)
+		return "", fmt.Errorf("etcd authenticate 失败 %d: %s", resp.StatusCode, raw)
 	}
-	return raw, nil
+
+	var result struct {
+		Token string `json:"token"`
+	}
+	if err := json.Unmarshal(raw, &result); err != nil {
+		return "", fmt.Errorf("etcd authenticate 响应解析失败: %w", err)
+	}
+	return result.Token, nil
+}
+
+// ensureToken 确保开启认证配置时已缓存 token，无需认证或已有 token 时直接返回。
+func (c *Client) ensureToken(ctx context.Context) error {
+	if c.username == "" {
+		return nil
+	}
+	c.mu.Lock()
+	hasToken := c.token != ""
+	c.mu.Unlock()
+	if hasToken {
+		return nil
+	}
+	token, err := c.authenticate(ctx)
+	if err != nil {
+		return err
+	}
+	c.mu.Lock()
+	c.token = token
+	c.mu.Unlock()
+	return nil
+}
+
+// resetToken 清除缓存的 token，下次 ensureToken 会重新获取。
+func (c *Client) resetToken() {
+	c.mu.Lock()
+	c.token = ""
+	c.mu.Unlock()
 }
 
 // endpoint 以轮询方式返回一个 endpoint，实现多节点负载均衡
@@ -126,9 +211,13 @@ func (c *Client) endpoint() string {
 	return c.endpoints[idx]
 }
 
+// setAuth 设置请求的认证信息。
 func (c *Client) setAuth(req *http.Request) {
-	if c.username != "" {
-		req.SetBasicAuth(c.username, c.password)
+	c.mu.Lock()
+	token := c.token
+	c.mu.Unlock()
+	if token != "" {
+		req.Header.Set("Authorization", token)
 	}
 }
 

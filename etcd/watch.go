@@ -95,9 +95,15 @@ func (c *Client) Watch(ctx context.Context, key string) (<-chan WatchEvent, <-ch
 // 返回值：err=nil 表示 ctx 取消的正常退出；connected 表示本次连接是否曾成功收到过事件。
 func (c *Client) watchOnce(ctx context.Context, key string, events chan<- WatchEvent, errs chan<- error) (err error, connected bool) {
 	body, _ := json.Marshal(map[string]any{
-		"key":             b64(key),
-		"progress_notify": false,
+		"create_request": map[string]any{
+			"key":             b64(key),
+			"progress_notify": false,
+		},
 	})
+
+	if err := c.ensureToken(ctx); err != nil {
+		return err, false
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		c.endpoint()+"/v3/watch", bytes.NewReader(body))
@@ -109,7 +115,6 @@ func (c *Client) watchOnce(ctx context.Context, key string, events chan<- WatchE
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		// ctx 取消导致的错误，视为正常退出
 		if ctx.Err() != nil {
 			return nil, false
 		}
@@ -117,6 +122,11 @@ func (c *Client) watchOnce(ctx context.Context, key string, events chan<- WatchE
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusUnauthorized && c.username != "" {
+		// token 过期，清除后让外层重连时 ensureToken 重新获取
+		c.resetToken()
+		return fmt.Errorf("etcd watch 认证过期，已重置 token"), false
+	}
 	if resp.StatusCode >= 300 {
 		raw, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("etcd watch 失败 %d: %s", resp.StatusCode, raw), false
