@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 // NewWriter 初始化 SSE 响应头并返回按 data 事件写入的 writer。
@@ -41,6 +42,7 @@ func NewEventWriter(w http.ResponseWriter) (Writer, error) {
 }
 
 type writer struct {
+	mu      sync.Mutex
 	w       http.ResponseWriter
 	flusher http.Flusher
 }
@@ -52,6 +54,9 @@ func (w *writer) Write(p []byte) (int, error) {
 	if text == "" {
 		return len(p), nil
 	}
+
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	for _, line := range strings.Split(text, "\n") {
 		if _, err := fmt.Fprintf(w.w, "data: %s\n", line); err != nil {
 			return 0, err
@@ -60,14 +65,18 @@ func (w *writer) Write(p []byte) (int, error) {
 	if _, err := fmt.Fprint(w.w, "\n"); err != nil {
 		return 0, err
 	}
+
 	w.flusher.Flush()
 	return len(p), nil
 }
 
 func (w *writer) WriteEvent(event, data string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	if _, err := fmt.Fprintf(w.w, "event: %s\ndata: %s\n\n", event, data); err != nil {
 		return err
 	}
+
 	w.flusher.Flush()
 	return nil
 }
