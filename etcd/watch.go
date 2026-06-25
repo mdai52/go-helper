@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,6 +18,8 @@ type WatchEvent struct {
 	Type  string // "PUT" 或 "DELETE"
 	Value string // PUT 时的新值（已解码）；DELETE 时为空
 }
+
+var errWatchAuthExpired = errors.New("etcd watch 认证过期，已重置 token")
 
 // watchResponse 是 etcd watch 流中每行 JSON 的结构
 type watchResponse struct {
@@ -48,6 +51,7 @@ func (c *Client) Watch(ctx context.Context, key string) (<-chan WatchEvent, <-ch
 			maxBackoff  = 30 * time.Second
 		)
 		backoff := initBackoff
+		authImmediateRetryUsed := false
 
 		for {
 			// 检查 ctx 是否已取消
@@ -62,15 +66,25 @@ func (c *Client) Watch(ctx context.Context, key string) (<-chan WatchEvent, <-ch
 				// ctx 取消导致的正常退出
 				return
 			}
+			authExpired := errors.Is(err, errWatchAuthExpired)
 			// 连接曾经成功过，说明 etcd 是健康的，重置退避时间
 			if connected {
 				backoff = initBackoff
+			}
+			if connected || !authExpired {
+				authImmediateRetryUsed = false
 			}
 
 			// 发送错误，非阻塞
 			select {
 			case errs <- fmt.Errorf("etcd watch 断开，准备重连: %w", err):
 			default:
+			}
+
+			// token 过期属于可恢复错误，清 token 后立即重连一次；若仍持续 401，再走退避。
+			if authExpired && !authImmediateRetryUsed {
+				authImmediateRetryUsed = true
+				continue
 			}
 
 			// 退避等待后重连
@@ -95,21 +109,26 @@ func (c *Client) Watch(ctx context.Context, key string) (<-chan WatchEvent, <-ch
 // 返回值：err=nil 表示 ctx 取消的正常退出；connected 表示本次连接是否曾成功收到过事件。
 func (c *Client) watchOnce(ctx context.Context, key string, events chan<- WatchEvent, errs chan<- error) (err error, connected bool) {
 	body, _ := json.Marshal(map[string]any{
-		"key":             b64(key),
-		"progress_notify": false,
+		"create_request": map[string]any{
+			"key":             b64(key),
+			"progress_notify": false,
+		},
 	})
+
+	if err := c.ensureToken(ctx); err != nil {
+		return err, false
+	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost,
 		c.endpoint()+"/v3/watch", bytes.NewReader(body))
 	if err != nil {
 		return err, false
 	}
-	c.setAuth(req)
+	usedToken := c.setAuth(req)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		// ctx 取消导致的错误，视为正常退出
 		if ctx.Err() != nil {
 			return nil, false
 		}
@@ -117,6 +136,11 @@ func (c *Client) watchOnce(ctx context.Context, key string, events chan<- WatchE
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode == http.StatusUnauthorized && c.username != "" {
+		// token 过期，清除后让外层立即重连一次并由 ensureToken 重新获取
+		c.resetToken(usedToken)
+		return errWatchAuthExpired, false
+	}
 	if resp.StatusCode >= 300 {
 		raw, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("etcd watch 失败 %d: %s", resp.StatusCode, raw), false
