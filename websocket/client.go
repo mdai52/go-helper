@@ -21,7 +21,12 @@ func NewClient(url, protocol, origin string) (*ClientConn, error) {
 		header.Set("Origin", origin)
 	}
 
-	ws, _, err := websocket.DefaultDialer.Dial(url, header)
+	dialer := *websocket.DefaultDialer
+	if protocol != "" {
+		dialer.Subprotocols = []string{protocol}
+	}
+
+	ws, _, err := dialer.Dial(url, header)
 	if err != nil {
 		logman.Error("connect failed", "error", err)
 		return nil, err
