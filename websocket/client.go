@@ -3,7 +3,7 @@ package websocket
 import (
 	"net/http"
 
-	gorilla "github.com/gorilla/websocket"
+	"github.com/gorilla/websocket"
 	"github.com/rehiy/libgo/logman"
 )
 
@@ -21,7 +21,7 @@ func NewClient(url, protocol, origin string) (*ClientConn, error) {
 		header.Set("Origin", origin)
 	}
 
-	ws, _, err := gorilla.DefaultDialer.Dial(url, header)
+	ws, _, err := websocket.DefaultDialer.Dial(url, header)
 	if err != nil {
 		logman.Error("connect failed", "error", err)
 		return nil, err

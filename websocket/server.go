@@ -4,9 +4,14 @@ import (
 	"net/http"
 	"strings"
 
-	gorilla "github.com/gorilla/websocket"
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 )
+
+// ServerConfig WebSocket 服务端配置
+type ServerConfig struct {
+	AllowedOrigins []string // 允许的 Origin 列表，支持通配符 *
+}
 
 // ServerConn WebSocket 服务端连接
 type ServerConn struct {
@@ -21,7 +26,7 @@ func (c *ServerConfig) Handler(handler func(*ServerConn)) gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusForbidden)
 			return
 		}
-		upgrader := gorilla.Upgrader{
+		upgrader := websocket.Upgrader{
 			CheckOrigin: func(r *http.Request) bool { return true },
 		}
 		ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
@@ -33,9 +38,22 @@ func (c *ServerConfig) Handler(handler func(*ServerConn)) gin.HandlerFunc {
 	}
 }
 
-// ServerConfig WebSocket 服务端配置
-type ServerConfig struct {
-	AllowedOrigins []string // 允许的 Origin 列表，支持通配符 *
+// CorsMiddleware CORS 中间件
+func (c *ServerConfig) CorsMiddleware() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		origin := ctx.GetHeader("Origin")
+		if c.CheckOrigin(origin) {
+			ctx.Header("Access-Control-Allow-Origin", origin)
+			ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			ctx.Header("Access-Control-Allow-Credentials", "true")
+		}
+		if ctx.Request.Method == http.MethodOptions {
+			ctx.AbortWithStatus(http.StatusNoContent)
+			return
+		}
+		ctx.Next()
+	}
 }
 
 // CheckOrigin 检查 Origin 是否允许
@@ -66,22 +84,4 @@ func (c *ServerConfig) matchOrigin(origin, pattern string) bool {
 		}
 	}
 	return false
-}
-
-// CorsMiddleware CORS 中间件
-func (c *ServerConfig) CorsMiddleware() gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		origin := ctx.GetHeader("Origin")
-		if c.CheckOrigin(origin) {
-			ctx.Header("Access-Control-Allow-Origin", origin)
-			ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-			ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-			ctx.Header("Access-Control-Allow-Credentials", "true")
-		}
-		if ctx.Request.Method == http.MethodOptions {
-			ctx.AbortWithStatus(http.StatusNoContent)
-			return
-		}
-		ctx.Next()
-	}
 }
