@@ -14,6 +14,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/websocket v1.5.3
 	github.com/jaypipes/ghw v0.24.0
+	github.com/libdns/alidns v1.0.7
 	github.com/libdns/libdns v1.1.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/pkg/sftp v1.13.10
