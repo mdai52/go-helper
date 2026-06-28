@@ -6,7 +6,7 @@
 
 ### 当前版本
 
-本次更新重构 `websocket` 包，统一使用 `golang.org/x/net/websocket`，移除 `gorilla/websocket` 依赖。
+本次更新重构 `websocket` 包，统一使用 `github.com/gorilla/websocket` 实现。
 
 ---
 
@@ -14,7 +14,7 @@
 
 ### 主要变更
 
-1. **统一 WebSocket 实现**：移除 `gorilla/websocket` 依赖，统一使用 `golang.org/x/net/websocket`
+1. **统一 WebSocket 实现**：统一使用 `github.com/gorilla/websocket`
 2. **分离客户端和服务端**：`client.go` 和 `server.go` 分离
 3. **配置结构化**：使用 `ServerConfig` 管理配置
 
@@ -38,6 +38,7 @@ websocket.CorsMiddleware()
 // 新版本 - 配置结构
 config := &websocket.ServerConfig{
     AllowedOrigins: []string{"http://localhost:*"},
+    ReadLimit:      1 << 20,
 }
 config.CheckOrigin(origin)
 config.CorsMiddleware()
@@ -53,8 +54,15 @@ msg, err := conn.Read()         // 返回 []byte
 
 // 新版本
 conn.Write([]byte("message"))   // 参数为 []byte
-err := conn.Read(buf)           // 参数为 []byte 缓冲区
+n, err := conn.Read(buf)        // 参数为 []byte 缓冲区，返回读取字节数
 ```
+
+
+### 安全相关配置
+
+- `AllowedOrigins` 非空时，空 `Origin` 默认拒绝；如需允许非浏览器客户端，显式设置 `AllowEmptyOrigin: true`。
+- `ReadLimit` 可限制单条消息最大读取字节数，建议公开入口按业务负载设置。
+- `ReadTimeout`、`PongTimeout`、`WriteTimeout` 可用于控制长连接读写 deadline。
 
 #### 客户端连接
 
@@ -97,11 +105,11 @@ func (app *App) shellWebSocket(c *gin.Context) {
         
         buf := make([]byte, 1024)
         for {
-            err := conn.Read(buf)
+            n, err := conn.Read(buf)
             if err != nil {
                 break
             }
-            conn.Write([]byte("echo: " + string(buf)))
+            conn.Write([]byte("echo: " + string(buf[:n])))
         }
     })(c)
 }

@@ -287,6 +287,7 @@ import "github.com/rehiy/libgo/websocket"
 // 配置服务端
 config := &websocket.ServerConfig{
     AllowedOrigins: []string{"https://example.com", "*.example.com"},
+    ReadLimit:      1 << 20,
 }
 
 // 创建处理器
@@ -310,14 +311,17 @@ httpd.GET("/ws", config.Handler(func(conn *websocket.ServerConn) {
 import "github.com/rehiy/libgo/tcprelay"
 
 // WebSocket 到 TCP 转发
-httpd.GET("/tcp", func(c *gin.Context) {
-    websocket.Handler(func(ws *websocket.Conn) {
-        tcprelay.Relay(ws, &tcprelay.Param{
-            TargetAddr: "localhost:22",
-            BinaryMode: false,
-        })
-    }).ServeHTTP(c.Writer, c.Request)
-})
+config := &websocket.ServerConfig{
+    AllowedOrigins: []string{"https://example.com"},
+    ReadLimit:      1 << 20,
+}
+
+httpd.GET("/tcp", config.Handler(func(ws *websocket.ServerConn) {
+    tcprelay.Relay(ws.Conn, &tcprelay.Param{
+        TargetAddr: "localhost:22",
+        BinaryMode: false,
+    })
+}))
 ```
 
 ### HTTP 服务器
