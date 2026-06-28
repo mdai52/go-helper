@@ -15,15 +15,29 @@ const (
 
 // Conn gorilla/websocket 的流式包装，提供并发安全的 Read/Write 和原生 Ping
 type Conn struct {
-	ws      *websocket.Conn
-	wmu     sync.Mutex // guards WriteMessage / WriteJSON
-	rmu     sync.Mutex // guards NextReader / ReadJSON
-	rdBuf   io.Reader  // current message reader (stream shim)
-	msgType int        // TextMessage or BinaryMessage
+	ws           *websocket.Conn
+	wmu          sync.Mutex    // guards WriteMessage / WriteJSON
+	rmu          sync.Mutex    // guards NextReader / ReadJSON
+	rdBuf        io.Reader     // current message reader (stream shim)
+	msgType      int           // TextMessage or BinaryMessage
+	writeTimeout time.Duration // write deadline timeout
 }
 
 func newConn(ws *websocket.Conn) *Conn {
 	return &Conn{ws: ws, msgType: TextMessage}
+}
+
+func newConnWithWriteTimeout(ws *websocket.Conn, timeout time.Duration) *Conn {
+	conn := newConn(ws)
+	conn.writeTimeout = timeout
+	return conn
+}
+
+// SetMessageType 设置写消息类型（供 tcprelay 切换 BinaryMessage）
+func (c *Conn) SetMessageType(t int) {
+	c.wmu.Lock()
+	defer c.wmu.Unlock()
+	c.msgType = t
 }
 
 // Read 流式读，跨多消息拼接
@@ -57,6 +71,9 @@ func (c *Conn) Read(p []byte) (int, error) {
 func (c *Conn) Write(p []byte) (int, error) {
 	c.wmu.Lock()
 	defer c.wmu.Unlock()
+	if c.writeTimeout > 0 {
+		_ = c.ws.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+	}
 	if err := c.ws.WriteMessage(c.msgType, p); err != nil {
 		return 0, err
 	}
@@ -74,17 +91,19 @@ func (c *Conn) ReadJSON(v any) error {
 func (c *Conn) WriteJSON(v any) error {
 	c.wmu.Lock()
 	defer c.wmu.Unlock()
+	if c.writeTimeout > 0 {
+		_ = c.ws.SetWriteDeadline(time.Now().Add(c.writeTimeout))
+	}
 	return c.ws.WriteJSON(v)
 }
 
 // Ping 发送 WS ping 控制帧（gorilla WriteControl 自身并发安全，无需 wmu）
 func (c *Conn) Ping(data []byte) error {
-	return c.ws.WriteControl(websocket.PingMessage, data, time.Now().Add(10*time.Second))
-}
-
-// SetMessageType 设置写消息类型（供 tcprelay 切换 BinaryMessage）
-func (c *Conn) SetMessageType(t int) {
-	c.msgType = t
+	timeout := c.writeTimeout
+	if timeout <= 0 {
+		timeout = 10 * time.Second
+	}
+	return c.ws.WriteControl(websocket.PingMessage, data, time.Now().Add(timeout))
 }
 
 // Close 关闭连接

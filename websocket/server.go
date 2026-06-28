@@ -3,6 +3,7 @@ package websocket
 import (
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -10,7 +11,12 @@ import (
 
 // ServerConfig WebSocket 服务端配置
 type ServerConfig struct {
-	AllowedOrigins []string // 允许的 Origin 列表，支持通配符 *
+	AllowedOrigins   []string      // 允许的 Origin 列表，支持通配符 *
+	AllowEmptyOrigin bool          // 配置 AllowedOrigins 后是否允许空 Origin
+	ReadLimit        int64         // 单条消息最大读取字节数，0 表示不限制
+	ReadTimeout      time.Duration // 读取超时，0 表示不设置
+	WriteTimeout     time.Duration // 写控制帧超时，0 表示使用默认值
+	PongTimeout      time.Duration // pong 等待超时，0 表示不设置
 }
 
 // ServerConn WebSocket 服务端连接
@@ -33,7 +39,8 @@ func (c *ServerConfig) Handler(handler func(*ServerConn)) gin.HandlerFunc {
 		if err != nil {
 			return
 		}
-		conn := &ServerConn{newConn(ws)}
+		c.applyConnOptions(ws)
+		conn := &ServerConn{newConnWithWriteTimeout(ws, c.WriteTimeout)}
 		handler(conn)
 	}
 }
@@ -43,7 +50,9 @@ func (c *ServerConfig) CorsMiddleware() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		origin := ctx.GetHeader("Origin")
 		if c.CheckOrigin(origin) {
-			ctx.Header("Access-Control-Allow-Origin", origin)
+			if origin != "" {
+				ctx.Header("Access-Control-Allow-Origin", origin)
+			}
 			ctx.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 			ctx.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 			ctx.Header("Access-Control-Allow-Credentials", "true")
@@ -62,7 +71,7 @@ func (c *ServerConfig) CheckOrigin(origin string) bool {
 		return true
 	}
 	if origin == "" {
-		return true
+		return c.AllowEmptyOrigin
 	}
 	for _, allowed := range c.AllowedOrigins {
 		if c.matchOrigin(origin, allowed) {
@@ -70,6 +79,21 @@ func (c *ServerConfig) CheckOrigin(origin string) bool {
 		}
 	}
 	return false
+}
+
+func (c *ServerConfig) applyConnOptions(ws *websocket.Conn) {
+	if c.ReadLimit > 0 {
+		ws.SetReadLimit(c.ReadLimit)
+	}
+	if c.ReadTimeout > 0 {
+		_ = ws.SetReadDeadline(time.Now().Add(c.ReadTimeout))
+	}
+	if c.PongTimeout > 0 {
+		_ = ws.SetReadDeadline(time.Now().Add(c.PongTimeout))
+		ws.SetPongHandler(func(string) error {
+			return ws.SetReadDeadline(time.Now().Add(c.PongTimeout))
+		})
+	}
 }
 
 // matchOrigin 检查 origin 是否匹配允许的模式（支持通配符 *）
