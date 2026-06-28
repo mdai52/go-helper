@@ -1,70 +1,36 @@
 package websocket
 
 import (
-	"errors"
-	"io"
 	"net/http"
 	"strings"
 
+	gorilla "github.com/gorilla/websocket"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/net/websocket"
 )
 
 // ServerConn WebSocket 服务端连接
 type ServerConn struct {
-	*websocket.Conn
+	*Conn
 }
 
 // Handler 创建 WebSocket 处理器（gin HandlerFunc）
 // 使用方式：router.GET("/ws", config.Handler(func(conn *ServerConn) { ... }))
 func (c *ServerConfig) Handler(handler func(*ServerConn)) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// 检查 Origin
 		if !c.CheckOrigin(ctx.GetHeader("Origin")) {
 			ctx.AbortWithStatus(http.StatusForbidden)
 			return
 		}
-		// 升级 WebSocket
-		websocket.Handler(func(ws *websocket.Conn) {
-			conn := &ServerConn{ws}
-			handler(conn)
-		}).ServeHTTP(ctx.Writer, ctx.Request)
+		upgrader := gorilla.Upgrader{
+			CheckOrigin: func(r *http.Request) bool { return true },
+		}
+		ws, err := upgrader.Upgrade(ctx.Writer, ctx.Request, nil)
+		if err != nil {
+			return
+		}
+		conn := &ServerConn{newConn(ws)}
+		handler(conn)
 	}
-}
-
-// Read 读取数据（实现 io.Reader 接口，流式读取）
-func (c *ServerConn) Read(v []byte) (n int, err error) {
-	return c.Conn.Read(v)
-}
-
-// ReadJSON 读取 JSON 消息
-func (c *ServerConn) ReadJSON(v any) error {
-	return websocket.JSON.Receive(c.Conn, v)
-}
-
-// Write 写入数据（实现 io.Writer 接口，流式写入）
-func (c *ServerConn) Write(p []byte) (n int, err error) {
-	return c.Conn.Write(p)
-}
-
-// WriteJSON 写入 JSON 消息
-func (c *ServerConn) WriteJSON(v any) error {
-	return websocket.JSON.Send(c.Conn, v)
-}
-
-// Close 关闭连接，忽略 EOF 错误
-func (c *ServerConn) Close() error {
-	err := c.Conn.Close()
-	if err != nil && !errors.Is(err, io.EOF) {
-		return err
-	}
-	return nil
-}
-
-// Die 发送消息并关闭连接
-func (c *ServerConn) Die(msg string) {
-	_, _ = c.Conn.Write([]byte(msg))
-	_ = c.Close()
 }
 
 // ServerConfig WebSocket 服务端配置

@@ -4,8 +4,9 @@ import (
 	"os"
 
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/net/websocket"
 	"golang.org/x/term"
+
+	"github.com/rehiy/libgo/websocket"
 )
 
 func Connect(ws *websocket.Conn, opt *SSHClientOption) error {

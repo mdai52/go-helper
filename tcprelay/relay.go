@@ -4,7 +4,7 @@ import (
 	"io"
 	"net"
 
-	"golang.org/x/net/websocket"
+	"github.com/rehiy/libgo/websocket"
 )
 
 // Param TCP 转发参数
@@ -18,7 +18,7 @@ func Relay(ws *websocket.Conn, p *Param) error {
 	defer ws.Close()
 
 	if p.BinaryMode {
-		ws.PayloadType = websocket.BinaryFrame
+		ws.SetMessageType(websocket.BinaryMessage)
 	}
 
 	// 连接远程服务器
