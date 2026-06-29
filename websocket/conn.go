@@ -33,7 +33,7 @@ func newConnWithWriteTimeout(ws *websocket.Conn, timeout time.Duration) *Conn {
 	return conn
 }
 
-// SetMessageType 设置写消息类型（供 tcprelay 切换 BinaryMessage）
+// SetMessageType 设置写消息类型（如二进制转发场景切换 BinaryMessage）
 func (c *Conn) SetMessageType(t int) {
 	c.wmu.Lock()
 	defer c.wmu.Unlock()

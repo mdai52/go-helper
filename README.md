@@ -53,9 +53,9 @@ go get -u github.com/rehiy/libgo
 |------|------|
 | `request` | HTTP 客户端，支持 JSON/表单请求、文件下载、进度显示 |
 | `httpd` | HTTP 服务器（基于 Gin），含 Recovery 中间件、静态文件服务 |
-| `websocket` | WebSocket 客户端/服务器封装，支持 Origin 验证 |
+| `websocket` | WebSocket 客户端/服务器封装，支持 Origin 验证和 ping 保活 |
+| `relay` | 通用双向流转发，支持 WebSocket 到 TCP 转发 |
 | `webssh` | SSH 客户端，支持密码和私钥认证 |
-| `tcprelay` | WebSocket 到 TCP 数据转发 |
 
 ### 系统监控
 
@@ -305,10 +305,19 @@ httpd.GET("/ws", config.Handler(func(conn *websocket.ServerConn) {
 }))
 ```
 
+### 通用流转发
+
+```go
+import "github.com/rehiy/libgo/relay"
+
+// 在两个 io.ReadWriter 之间双向转发
+err := relay.Bridge(relay.NewReadWriter(left), relay.NewReadWriter(right))
+```
+
 ### TCP 转发
 
 ```go
-import "github.com/rehiy/libgo/tcprelay"
+import "github.com/rehiy/libgo/relay"
 
 // WebSocket 到 TCP 转发
 config := &websocket.ServerConfig{
@@ -317,7 +326,7 @@ config := &websocket.ServerConfig{
 }
 
 httpd.GET("/tcp", config.Handler(func(ws *websocket.ServerConn) {
-    tcprelay.Relay(ws.Conn, &tcprelay.Param{
+    relay.TCPRelay(ws.Conn, &relay.TCPParam{
         TargetAddr: "localhost:22",
         BinaryMode: false,
     })
